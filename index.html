@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#1a0800">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Café Journal">
+<meta name="description" content="Tu bitácora personal de cafés de especialidad con puntuación SCA">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+<title>Diario de Café ☕</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --espresso:#1a0800;--roast:#3E1F00;--caramel:#7B3F00;--gold:#D4A843;
+  --cream:#FFF8F0;--cream2:#FFF0DC;--surface:#fff;--muted:#8B7355;
+  --green:#2E7D32;--gl:#E8F5E9;--border:#E8DDD0;--r:10px;
+}
+body{background:var(--cream);font-family:'DM Sans',sans-serif;min-height:100vh;max-width:430px;margin:0 auto;overflow-x:hidden}
+.topbar{background:var(--espresso);padding:12px 14px 10px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.tb-brand{font-family:'Playfair Display',serif;color:var(--gold);font-size:16px;font-weight:700}
+.tb-sub{color:#8B6914;font-size:10px;margin-top:1px}
+.tb-right{display:flex;align-items:center;gap:6px}
+.lb{background:rgba(212,168,67,.15);border:1px solid rgba(212,168,67,.3);color:var(--gold);font-size:10px;font-weight:500;padding:3px 7px;border-radius:5px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.lb.active{background:var(--gold);color:var(--espresso)}
+.tb-btn{background:none;border:none;color:var(--gold);font-size:24px;cursor:pointer;padding:0 2px;line-height:1}
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:100}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;gap:3px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif}
+.nb span{font-size:10px;color:var(--muted)}
+.nb svg{width:21px;height:21px;stroke:var(--muted);fill:none;stroke-width:1.8}
+.nb.active span,.nb.active svg{color:var(--caramel);stroke:var(--caramel)}
+.screen{display:none;padding:12px 14px 90px;min-height:calc(100vh - 58px)}
+.screen.active{display:block}
+/* HOME */
+.sw{position:relative;margin-bottom:10px}
+.sw svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--muted);fill:none;stroke-width:2}
+.si{width:100%;padding:9px 12px 9px 32px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);font-size:13px;font-family:'DM Sans',sans-serif;outline:none}
+.si:focus{border-color:var(--caramel)}
+.fr{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
+.fr::-webkit-scrollbar{display:none}
+.chip{padding:5px 11px;border-radius:20px;border:1px solid var(--border);background:var(--surface);font-size:11px;color:var(--muted);white-space:nowrap;cursor:pointer;flex-shrink:0;font-family:'DM Sans',sans-serif}
+.chip.active{background:var(--espresso);border-color:var(--espresso);color:var(--gold)}
+.sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sh h2{font-size:14px;font-weight:500;color:#333}
+.sh a{font-size:12px;color:var(--caramel);cursor:pointer}
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.cc{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .15s}
+.cc:active{transform:scale(.97)}
+.ci{height:80px;display:flex;align-items:center;justify-content:center;font-size:34px;position:relative;overflow:hidden}
+.ci img{width:100%;height:100%;object-fit:cover}
+.sbg{position:absolute;top:5px;right:5px;background:var(--espresso);color:var(--gold);font-size:9px;font-weight:500;padding:2px 5px;border-radius:5px}
+.mbg{position:absolute;top:5px;left:5px;font-size:9px;font-weight:500;padding:2px 5px;border-radius:5px}
+.mbg.q{background:rgba(230,81,0,.8);color:#fff}
+.mbg.e{background:rgba(46,125,50,.8);color:#fff}
+.cb{padding:8px 10px 10px}
+.cn{font-size:12px;font-weight:500;color:#222;margin-bottom:2px;line-height:1.3}
+.co{font-size:10px;color:var(--muted);margin-bottom:5px}
+.sp{display:inline-flex;align-items:center;gap:3px;background:var(--gl);border:1px solid #C0DD97;border-radius:5px;padding:2px 6px;font-size:10px;color:var(--green);font-weight:500}
+.rby{display:inline-flex;align-items:center;background:#E3F2FD;border:1px solid #90CAF9;border-radius:5px;padding:2px 6px;font-size:10px;color:#1565C0;margin-left:3px}
+.rbn{display:inline-flex;align-items:center;background:#FFF5F5;border:1px solid #FFCDD2;border-radius:5px;padding:2px 6px;font-size:10px;color:#C62828;margin-left:3px}
+.es{text-align:center;padding:40px 20px;color:var(--muted)}
+.es .bi{font-size:48px;margin-bottom:12px}
+.fab{position:fixed;bottom:70px;right:16px;width:50px;height:50px;background:var(--caramel);border-radius:50%;border:none;color:#fff;font-size:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(123,63,0,.35);z-index:99}
+/* FORM */
+.ms{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:3px;margin-bottom:12px;gap:3px}
+.mo{flex:1;padding:7px 4px;border:none;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;background:none;color:var(--muted);transition:all .2s}
+.mo.aq{background:#FFF3E0;color:#E65100}
+.mo.ae{background:var(--gl);color:var(--green)}
+/* PHOTO */
+.pz{border:2px dashed var(--border);border-radius:12px;height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;position:relative;overflow:hidden;background:var(--surface)}
+.pz img{width:100%;height:100%;object-fit:cover}
+.pz-ov{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.4));padding:5px;text-align:center}
+.pz svg{width:24px;height:24px;stroke:var(--muted);fill:none;stroke-width:1.5}
+.pz-lbl{font-size:11px;color:var(--muted)}
+/* PHOTO BUTTONS — 3 buttons when photo exists */
+.pb{display:flex;gap:6px;margin-bottom:12px}
+.pb button{flex:1;padding:8px 4px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);font-size:11px;font-family:'DM Sans',sans-serif;color:var(--caramel);font-weight:500;cursor:pointer}
+.pb button:active{background:var(--cream2)}
+.pb button.del-photo{color:#C62828;border-color:#FFCDD2}
+/* AI */
+.aib{width:100%;padding:9px;background:var(--espresso);border:none;border-radius:var(--r);color:var(--gold);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:12px}
+.aib:disabled{opacity:.55}
+.spin{width:13px;height:13px;border:2px solid var(--gold);border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.air{background:#FFF8E1;border:1px solid #FFD54F;border-radius:var(--r);padding:9px 11px;margin-bottom:12px;font-size:12px;color:#5D4037;line-height:1.6;display:none}
+.air-lbl{font-size:10px;font-weight:500;color:#F57F17;margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em}
+.fs{margin-bottom:12px}
+.fsl{font-size:10px;font-weight:500;color:var(--caramel);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.f{display:flex;flex-direction:column;gap:2px}
+.f.full{grid-column:1/-1}
+.f label{font-size:10px;color:var(--muted)}
+.f input,.f select,.f textarea{padding:7px 9px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;font-family:'DM Sans',sans-serif;color:#333;outline:none;background:var(--surface);width:100%}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--caramel)}
+.f textarea{resize:none;height:52px;line-height:1.5}
+/* SCA */
+.scas{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 13px;margin-bottom:12px}
+.scah{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px}
+.scah span{font-size:12px;font-weight:500;color:#333}
+.scat{background:var(--espresso);color:var(--gold);font-size:12px;font-weight:500;padding:3px 9px;border-radius:7px}
+.scar{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.scar:last-child{margin-bottom:0}
+.scal{font-size:11px;color:var(--muted);width:52px;flex-shrink:0}
+.scasl{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:var(--border);outline:none;cursor:pointer}
+.scasl::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--caramel);cursor:pointer}
+.scan{font-size:11px;font-weight:500;color:var(--caramel);width:26px;text-align:right;flex-shrink:0}
+/* DESCRIPTORS */
+.dg{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.dc{padding:4px 9px;border-radius:18px;border:1px solid var(--border);background:var(--surface);font-size:11px;color:var(--muted);cursor:pointer}
+.dc.active{background:var(--espresso);border-color:var(--espresso);color:var(--gold)}
+.sgl{font-size:11px;font-weight:500;color:#555;margin-bottom:4px;margin-top:8px}
+/* REBUY */
+.tr{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 13px;margin-bottom:12px}
+.trl{font-size:13px;color:#333;font-weight:500}
+.tbs{display:flex;gap:6px}
+.tb2{padding:5px 13px;border-radius:18px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted)}
+.tb2.y.active{background:#E3F2FD;border-color:#90CAF9;color:#1565C0}
+.tb2.n.active{background:#FFF5F5;border-color:#FFCDD2;color:#C62828}
+.sb{width:100%;padding:12px;background:var(--caramel);border:none;border-radius:var(--r);color:#fff;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:6px}
+/* ── PREPARATIONS LIST ── */
+.prep-list{margin-bottom:12px}
+.prep-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;position:relative}
+.prep-item-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.prep-item-title{font-size:12px;font-weight:500;color:var(--caramel)}
+.prep-item-del{background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;padding:0;line-height:1}
+.prep-item-info{font-size:11px;color:var(--muted);line-height:1.6}
+.prep-sca{display:inline-block;background:var(--gl);border:1px solid #C0DD97;border-radius:5px;padding:1px 7px;font-size:11px;color:var(--green);font-weight:500;margin-top:4px}
+.add-prep-btn{width:100%;padding:9px;border:1.5px dashed var(--border);border-radius:var(--r);background:none;font-size:12px;color:var(--caramel);cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:12px}
+.add-prep-btn:hover{border-color:var(--caramel);background:var(--cream2)}
+/* PREP MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.modal{background:var(--cream);border-radius:20px 20px 0 0;width:100%;max-width:430px;padding:20px 16px 32px;max-height:88vh;overflow-y:auto}
+.modal-title{font-size:15px;font-weight:500;color:#222;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);padding:0;line-height:1}
+/* EXPERT SECTION */
+.exp-sec{display:none}
+.exp-sec.vis{display:block}
+/* DETAIL */
+.dh{background:var(--espresso);padding:14px 14px 12px;display:flex;gap:11px;align-items:flex-start;margin:-12px -14px 12px}
+.dpkg{width:58px;height:58px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;overflow:hidden}
+.dpkg img{width:100%;height:100%;object-fit:cover}
+.dn{font-family:'Playfair Display',serif;font-size:15px;color:var(--cream);margin-bottom:2px}
+.dr{font-size:11px;color:#8B6914;margin-bottom:5px}
+.tagrow{display:flex;gap:4px;flex-wrap:wrap}
+.tag{background:#3E1F00;border-radius:4px;padding:2px 6px;font-size:10px;color:var(--gold)}
+.ig{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:11px}
+.ii{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:7px 9px}
+.il{font-size:9px;color:var(--muted);margin-bottom:2px}
+.iv{font-size:12px;font-weight:500;color:#222}
+.prep-detail-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 13px;margin-bottom:10px}
+.prep-detail-title{font-size:13px;font-weight:500;color:var(--caramel);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.prep-detail-title .pnum{background:var(--espresso);color:var(--gold);font-size:10px;font-weight:500;padding:1px 6px;border-radius:4px}
+.br{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.bl{font-size:10px;color:var(--muted);width:48px}
+.bbg{flex:1;height:5px;background:var(--border);border-radius:2px}
+.bf{height:5px;border-radius:2px;background:var(--caramel)}
+.bv{font-size:10px;font-weight:500;color:var(--caramel);width:22px;text-align:right}
+.nb2{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:9px 11px;margin-bottom:10px}
+.nl{font-size:10px;color:var(--muted);margin-bottom:3px}
+.nt{font-size:12px;color:#444;line-height:1.6}
+.pr{display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:9px 13px;margin-bottom:10px}
+.bk{display:inline-flex;align-items:center;gap:4px;background:none;border:none;color:var(--gold);font-size:13px;cursor:pointer;padding:0;font-family:'DM Sans',sans-serif;margin-bottom:11px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 13px}
+.sl{font-size:10px;color:var(--muted);margin-bottom:3px}
+.sv{font-size:21px;color:var(--caramel);font-family:'Playfair Display',serif}
+.toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%);background:var(--espresso);color:var(--gold);padding:9px 18px;border-radius:18px;font-size:12px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div><div class="tb-brand" id="tb-brand">Diario de Café</div><div class="tb-sub" id="tb-sub">0 cafés</div></div>
+  <div class="tb-right">
+    <button class="lb active" id="lb-es" onclick="setLang('es')">ES</button>
+    <button class="lb" id="lb-en" onclick="setLang('en')">EN</button>
+    <button class="lb" id="lb-de" onclick="setLang('de')">DE</button>
+    <button class="tb-btn" onclick="newCafe()">＋</button>
+  </div>
+</div>
+
+<!-- HOME -->
+<div class="screen active" id="sc-home">
+  <div class="sw"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input class="si" id="search" oninput="renderHome()"></div>
+  <div class="fr" id="chips">
+    <button class="chip active" onclick="setFilter('all',this)" id="ch-all">Todos</button>
+    <button class="chip" onclick="setFilter('quick',this)" id="ch-q">Rápido</button>
+    <button class="chip" onclick="setFilter('expert',this)" id="ch-e">Expert</button>
+  </div>
+  <div class="sh"><h2 id="hc">Mis cafés</h2><a id="lnk-st" onclick="showSc('stats')">Ver estadísticas →</a></div>
+  <div class="cg" id="cg"></div>
+  <div class="es" id="es" style="display:none"><div class="bi">☕</div><p id="em-msg">Registra tu primer café tocando +</p></div>
+</div>
+
+<!-- REGISTER -->
+<div class="screen" id="sc-register">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+    <button class="bk" onclick="showSc('home')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg><span id="lbl-bk">Volver</span></button>
+    <span style="font-size:14px;font-weight:500;color:#222" id="ft">Nuevo café</span>
+  </div>
+  <div class="ms">
+    <button class="mo aq" id="mo-q" onclick="setMode('quick')">⚡ <span id="lbl-mq">Registro Rápido</span></button>
+    <button class="mo" id="mo-e" onclick="setMode('expert')">🎓 <span id="lbl-me">Coffee Expert</span></button>
+  </div>
+  <!-- PHOTO -->
+  <div class="pz" id="pz"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span class="pz-lbl" id="lbl-ph">Agregar foto del paquete</span></div>
+  <div class="pb" id="photo-btns">
+    <button onclick="document.getElementById('pc').click()">📷 <span id="lbl-cam">Tomar foto</span></button>
+    <button onclick="document.getElementById('pg').click()">🖼️ <span id="lbl-gal">Galería</span></button>
+  </div>
+  <input type="file" id="pc" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)">
+  <input type="file" id="pg" accept="image/*" style="display:none" onchange="handlePhoto(event)">
+  <!-- AI -->
+  <button class="aib" id="aib" onclick="doAI()" disabled><span id="ai-ic">✨</span><span id="ai-tx">Analizar con IA</span></button>
+  <div class="air" id="air"><div class="air-lbl" id="lbl-aif">✨ La IA encontró</div><div id="air-tx"></div></div>
+  <!-- BASE FIELDS -->
+  <div class="fs"><div class="fsl" id="lbl-pkg">El paquete</div>
+    <div class="fg">
+      <div class="f full"><label id="lbl-nm">Nombre del café</label><input id="f-nom" placeholder="Ej: El Paraíso Geisha"></div>
+      <div class="f"><label id="lbl-ts">Tostador</label><input id="f-tos"></div>
+      <div class="f"><label id="lbl-pr">Precio (€)</label><input id="f-pre" type="number" step="0.01"></div>
+      <div class="f"><label id="lbl-gr">Gramos</label><input id="f-gra" type="number" placeholder="250"></div>
+      <div class="f full"><label id="lbl-lu">Lugar de compra</label><input id="f-lug"></div>
+    </div>
+  </div>
+  <div class="fs"><div class="fsl" id="lbl-ori">Origen</div>
+    <div class="fg">
+      <div class="f"><label id="lbl-pa">País</label><input id="f-pai" placeholder="Colombia"></div>
+      <div class="f"><label id="lbl-re">Región / Finca</label><input id="f-reg"></div>
+      <div class="f"><label id="lbl-va">Variedad</label><input id="f-var" placeholder="Geisha"></div>
+      <div class="f"><label id="lbl-pc">Proceso</label>
+        <select id="f-pro"><option value="">—</option><option>Lavado</option><option>Natural</option><option>Honey</option><option>Anaeróbico</option><option>Doble Fermentación</option><option>Experimental</option><option>Otro</option></select>
+      </div>
+    </div>
+  </div>
+  <!-- MÉTODO — always -->
+  <div class="fs"><div class="fsl" id="lbl-met-s">Método / Cafetera</div>
+    <div class="fg">
+      <div class="f full"><label id="lbl-met">Método principal</label>
+        <select id="f-met">
+          <option value="">—</option>
+          <optgroup label="Filtro"><option>V60</option><option>Chemex</option><option>AeroPress</option><option>Kalita</option><option>Sifón</option><option>Café de filtro eléctrico</option></optgroup>
+          <optgroup label="Espresso"><option>Espresso (máquina)</option><option>Moka / Cafetera italiana</option><option>Nespresso / Cápsulas</option></optgroup>
+          <optgroup label="Inmersión"><option>Prensa Francesa</option><option>Cold Brew</option><option>Café turco</option></optgroup>
+          <optgroup label="Otro"><option>Café instantáneo</option><option>Otro</option></optgroup>
+        </select>
+      </div>
+      <div class="f full" id="qnw"><label id="lbl-no">Notas personales</label><textarea id="f-noq" placeholder="¿Qué te pareció?"></textarea></div>
+    </div>
+  </div>
+
+  <!-- EXPERT SECTION -->
+  <div class="exp-sec" id="exp-sec">
+    <!-- PREPARATIONS LIST -->
+    <div class="fsl" id="lbl-preps-title" style="margin-bottom:8px">Preparaciones</div>
+    <div class="prep-list" id="prep-list"></div>
+    <button class="add-prep-btn" onclick="openPrepModal()" id="add-prep-btn">
+      ＋ <span id="lbl-add-prep">Añadir preparación</span>
+    </button>
+    <!-- SCA GLOBAL (quick summary if multiple preps) -->
+    <div class="scas" id="sca-global-box" style="display:none">
+      <div class="scah"><span id="lbl-sca-g">Puntuación SCA promedio</span><span class="scat" id="sca-avg-badge">— / 100</span></div>
+    </div>
+    <!-- DESCRIPTORS -->
+    <div class="fs"><div class="fsl" id="lbl-desc-s">Descriptores sensoriales</div>
+      <div class="sgl" id="lbl-dc">Cuerpo</div>
+      <div class="dg" id="desc-c">
+        <span class="dc" onclick="this.classList.toggle('active')">Sedoso</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Ligero</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Pleno</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Cremoso</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Acuoso</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Aterciopelado</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Mantecoso</span>
+      </div>
+      <div class="sgl" id="lbl-da">Acidez</div>
+      <div class="dg" id="desc-a">
+        <span class="dc" onclick="this.classList.toggle('active')">Brillante</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Cítrica</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Málica</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Tartárica</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Suave</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Vibrante</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Plana</span>
+      </div>
+      <div class="sgl" id="lbl-dn">Notas aromáticas</div>
+      <div class="dg" id="desc-n">
+        <span class="dc" onclick="this.classList.toggle('active')">Floral</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Frutal</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Cítrico</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Chocolate</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Caramelo</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Nuez</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Especias</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Panela</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Jazmín</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Durazno</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Cereza</span>
+        <span class="dc" onclick="this.classList.toggle('active')">Madera</span>
+      </div>
+      <div class="f" style="margin-top:8px"><label id="lbl-noe">Notas de cata</label><textarea id="f-noe" placeholder="Describe tu experiencia..."></textarea></div>
+    </div>
+  </div>
+
+  <!-- REBUY -->
+  <div class="tr"><span class="trl" id="lbl-rb">¿Lo comprarías de nuevo?</span>
+    <div class="tbs">
+      <button class="tb2 y" id="rb-y" onclick="setRebuy(true)">✅ Sí</button>
+      <button class="tb2 n" id="rb-n" onclick="setRebuy(false)">❌ No</button>
+    </div>
+  </div>
+  <button class="sb" id="save-btn" onclick="saveCafe()">Guardar café ☕</button>
+</div>
+
+<!-- DETAIL -->
+<div class="screen" id="sc-detail"><div id="dc"></div></div>
+
+<!-- STATS -->
+<div class="screen" id="sc-stats">
+  <div style="margin-bottom:14px">
+    <div style="font-family:'Playfair Display',serif;font-size:19px;color:#222;margin-bottom:2px" id="lbl-st-t">Estadísticas</div>
+    <div style="font-size:12px;color:var(--muted)" id="lbl-st-s">Tu colección</div>
+  </div>
+  <div class="stat-grid" id="sgrid"></div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:12px">
+    <div style="font-size:12px;font-weight:500;color:#333;margin-bottom:11px" id="lbl-top">Top cafés por SCA</div>
+    <div id="top-list"></div>
+  </div>
+  <!-- STORAGE -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 13px;margin-bottom:10px">
+    <div style="font-size:11px;font-weight:500;color:var(--muted);margin-bottom:6px">💾 Almacenamiento (IndexedDB)</div>
+    <div id="storage-info" style="font-size:12px;color:#333;margin-bottom:8px"></div>
+    <button onclick="clearPhotos()" style="padding:6px 12px;border:1px solid #FFCDD2;border-radius:8px;background:#FFF5F5;color:#C62828;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif">🗑 Liberar fotos</button>
+  </div>
+  <!-- GOOGLE SHEETS EXPORT -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:12px">
+    <div style="font-size:12px;font-weight:500;color:#333;margin-bottom:4px">📊 Exportar a Google Sheets</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5">Genera un archivo CSV que puedes abrir directamente en Google Sheets o Excel con todos tus cafés.</div>
+    <button onclick="exportCSV()" style="width:100%;padding:10px;background:#1a7340;border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px">
+      ⬇️ Descargar CSV
+    </button>
+    <div style="font-size:10px;color:var(--muted);margin-top:6px;text-align:center">Luego en Google Sheets: Archivo → Importar → Subir CSV</div>
+  </div>
+</div>
+
+<!-- PREP MODAL -->
+<div class="modal-overlay" id="prep-modal" style="display:none" onclick="if(event.target===this)closePrepModal()">
+  <div class="modal">
+    <div class="modal-title"><span id="lbl-pm-t">Añadir preparación</span><button class="modal-close" onclick="closePrepModal()">×</button></div>
+    <div class="fs"><div class="fsl" id="lbl-pm-met">Método / Cafetera</div>
+      <div class="f full">
+        <select id="pm-met">
+          <option value="">—</option>
+          <optgroup label="Filtro"><option>V60</option><option>Chemex</option><option>AeroPress</option><option>Kalita</option><option>Sifón</option><option>Café de filtro eléctrico</option></optgroup>
+          <optgroup label="Espresso"><option>Espresso (máquina)</option><option>Moka / Cafetera italiana</option><option>Nespresso / Cápsulas</option></optgroup>
+          <optgroup label="Inmersión"><option>Prensa Francesa</option><option>Cold Brew</option><option>Café turco</option></optgroup>
+          <optgroup label="Otro"><option>Café instantáneo</option><option>Otro</option></optgroup>
+        </select>
+      </div>
+    </div>
+    <div class="fg" style="margin-bottom:12px">
+      <div class="f"><label id="lbl-pm-r">Ratio</label><input id="pm-rat" placeholder="1:15"></div>
+      <div class="f"><label id="lbl-pm-t2">Temp. (°C)</label><input id="pm-tmp" type="number" placeholder="92"></div>
+      <div class="f"><label id="lbl-pm-ex">Extracción (seg)</label><input id="pm-ext" type="number"></div>
+      <div class="f"><label id="lbl-pm-al">Altitud (msnm)</label><input id="pm-alt" type="number"></div>
+    </div>
+    <!-- SCA per prep -->
+    <div class="scas">
+      <div class="scah"><span id="lbl-pm-sca">Perfil SCA</span><span class="scat" id="pm-sca-badge">— / 100</span></div>
+      <div class="scar"><span class="scal" id="lbl-pm-ar">Aroma</span><input class="scasl" type="range" id="pm-ar" min="6" max="10" step="0.5" value="8" oninput="pmSCA()"><span class="scan" id="pm-ar-v">8.0</span></div>
+      <div class="scar"><span class="scal" id="lbl-pm-sa">Sabor</span><input class="scasl" type="range" id="pm-sa" min="6" max="10" step="0.5" value="8" oninput="pmSCA()"><span class="scan" id="pm-sa-v">8.0</span></div>
+      <div class="scar"><span class="scal" id="lbl-pm-ac">Acidez</span><input class="scasl" type="range" id="pm-ac" min="6" max="10" step="0.5" value="8" oninput="pmSCA()"><span class="scan" id="pm-ac-v">8.0</span></div>
+      <div class="scar"><span class="scal" id="lbl-pm-cu">Cuerpo</span><input class="scasl" type="range" id="pm-cu" min="6" max="10" step="0.5" value="8" oninput="pmSCA()"><span class="scan" id="pm-cu-v">8.0</span></div>
+    </div>
+    <div class="f" style="margin-bottom:14px"><label id="lbl-pm-no">Notas de esta preparación</label><textarea id="pm-not" placeholder="¿Cómo quedó con este método?"></textarea></div>
+    <button class="sb" onclick="addPrep()">✓ <span id="lbl-pm-save">Guardar preparación</span></button>
+  </div>
+</div>
+
+<button class="fab" onclick="newCafe()">＋</button>
+<div class="bnav">
+  <button class="nb active" id="nb-home" onclick="showSc('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span id="nbl-h">Inicio</span></button>
+  <button class="nb" id="nb-register" onclick="newCafe()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg><span id="nbl-n">Nuevo</span></button>
+  <button class="nb" id="nb-stats" onclick="showSc('stats')"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span id="nbl-s">Stats</span></button>
+</div>
+<!-- INSTALL BANNER -->
+<div id="install-banner" style="display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#1a0800;color:#D4A843;padding:10px 14px;z-index:200;align-items:center;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,.4)">
+  <span style="font-size:20px">☕</span>
+  <div style="flex:1;font-size:12px;line-height:1.4"><strong>Instalar Diario de Café</strong><br><span style="opacity:.8;font-size:11px">Accede sin internet desde tu pantalla</span></div>
+  <button onclick="installApp()" style="background:#D4A843;color:#1a0800;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Instalar</button>
+  <button onclick="dismissBanner()" style="background:none;border:none;color:#D4A843;font-size:18px;cursor:pointer;padding:0;line-height:1">×</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════ i18n ════════════════════════════
+const T={
+  es:{brand:'Diario de Café',sub:' cafés',search:'Buscar por nombre, origen...',all:'Todos',q:'Rápido',e:'Expert',stLink:'Ver estadísticas →',hc:'Mis cafés',em:'Registra tu primer café tocando +',bk:'Volver',nw:'Nuevo café',ed:'Editar café',mq:'Registro Rápido',me:'Coffee Expert',ph:'Agregar foto del paquete',cam:'Tomar foto',gal:'Galería',chg:'Cambiar foto',del:'Eliminar foto',ai:'Analizar con IA — rellenar campos',aiA:'Analizando...',aif:'✨ La IA encontró',pkg:'El paquete',nm:'Nombre del café',ts:'Tostador',pr:'Precio (€)',gr:'Gramos',lu:'Lugar de compra',ori:'Origen',pa:'País',re:'Región / Finca',va:'Variedad',pc:'Proceso',mets:'Método / Cafetera',met:'Método principal',noq:'Notas personales',prepsT:'Preparaciones',addPrep:'Añadir preparación',scaG:'Puntuación SCA promedio',descS:'Descriptores sensoriales',dc:'Cuerpo',da:'Acidez',dn:'Notas aromáticas',noe:'Notas de cata',rb:'¿Lo comprarías de nuevo?',save:'Guardar café ☕',navH:'Inicio',navN:'Nuevo',navS:'Stats',stT:'Estadísticas',stS:'Tu colección',tot:'Total cafés',avg:'Promedio SCA',best:'Mejor SCA',cnt:'Países',top:'Top cafés por SCA',del2:'🗑 Eliminar',edit:'✏️ Editar',deld:'Café eliminado',saved:'Café guardado ✓',upd:'Café actualizado ✓',nn:'Agrega el nombre del café',fok:' campos completados',nrd:'No pude leer la etiqueta. Prueba mejor foto.',pmT:'Añadir preparación',pmMet:'Método / Cafetera',pmR:'Ratio',pmTp:'Temp. (°C)',pmEx:'Extracción (seg)',pmAl:'Altitud (msnm)',pmSca:'Perfil SCA',pmAr:'Aroma',pmSa:'Sabor',pmAc:'Acidez',pmCu:'Cuerpo',pmNo:'Notas de esta preparación',pmSave:'Guardar preparación',method:'Método',ratio:'Ratio',temp:'Temp.',altitude:'Altitud',scaProfile:'Perfil SCA',cupping:'Notas de cata',misc:'Notas',place:'Lugar',preps:'preparaciones',removedPrep:'Preparación eliminada',},
+  en:{brand:'Coffee Journal',sub:' coffees',search:'Search by name, origin...',all:'All',q:'Quick',e:'Expert',stLink:'Statistics →',hc:'My coffees',em:'Add your first coffee by tapping +',bk:'Back',nw:'New coffee',ed:'Edit coffee',mq:'Quick Entry',me:'Coffee Expert',ph:'Add package photo',cam:'Take photo',gal:'Gallery',chg:'Change photo',del:'Remove photo',ai:'Analyze with AI — fill fields',aiA:'Analyzing...',aif:'✨ AI found',pkg:'The package',nm:'Coffee name',ts:'Roaster',pr:'Price (€)',gr:'Grams',lu:'Place of purchase',ori:'Origin',pa:'Country',re:'Region / Farm',va:'Variety',pc:'Process',mets:'Method / Brewer',met:'Main method',noq:'Personal notes',prepsT:'Preparations',addPrep:'Add preparation',scaG:'Average SCA score',descS:'Sensory descriptors',dc:'Body',da:'Acidity',dn:'Aroma notes',noe:'Cupping notes',rb:'Would you buy it again?',save:'Save coffee ☕',navH:'Home',navN:'New',navS:'Stats',stT:'Statistics',stS:'Your collection',tot:'Total coffees',avg:'Avg SCA',best:'Best SCA',cnt:'Countries',top:'Top coffees by SCA',del2:'🗑 Delete',edit:'✏️ Edit',deld:'Coffee deleted',saved:'Coffee saved ✓',upd:'Coffee updated ✓',nn:'Add the coffee name',fok:' fields filled',nrd:'Could not read label. Try a clearer photo.',pmT:'Add preparation',pmMet:'Method / Brewer',pmR:'Ratio',pmTp:'Temp (°C)',pmEx:'Extraction (sec)',pmAl:'Altitude (masl)',pmSca:'SCA Profile',pmAr:'Aroma',pmSa:'Flavor',pmAc:'Acidity',pmCu:'Body',pmNo:'Notes for this preparation',pmSave:'Save preparation',method:'Method',ratio:'Ratio',temp:'Temp',altitude:'Altitude',scaProfile:'SCA Profile',cupping:'Cupping notes',misc:'Notes',place:'Place',preps:'preparations',removedPrep:'Preparation removed',},
+  de:{brand:'Kaffeetagebuch',sub:' Kaffees',search:'Nach Name, Herkunft suchen...',all:'Alle',q:'Schnell',e:'Experte',stLink:'Statistiken →',hc:'Meine Kaffees',em:'Ersten Kaffee mit + hinzufügen',bk:'Zurück',nw:'Neuer Kaffee',ed:'Kaffee bearbeiten',mq:'Schnelleingabe',me:'Kaffee-Experte',ph:'Packungsfoto hinzufügen',cam:'Foto aufnehmen',gal:'Galerie',chg:'Foto ändern',del:'Foto entfernen',ai:'Mit KI analysieren — Felder ausfüllen',aiA:'Analysiere...',aif:'✨ KI hat gefunden',pkg:'Die Packung',nm:'Kaffeename',ts:'Rösterei',pr:'Preis (€)',gr:'Gramm',lu:'Kaufort',ori:'Herkunft',pa:'Land',re:'Region / Farm',va:'Sorte',pc:'Aufbereitung',mets:'Methode / Kaffeemaschine',met:'Hauptmethode',noq:'Persönliche Notizen',prepsT:'Zubereitungen',addPrep:'Zubereitung hinzufügen',scaG:'Ø SCA-Bewertung',descS:'Sensorische Deskriptoren',dc:'Körper',da:'Säure',dn:'Aromanotenoten',noe:'Verkostungsnotizen',rb:'Würdest du ihn wieder kaufen?',save:'Kaffee speichern ☕',navH:'Start',navN:'Neu',navS:'Stats',stT:'Statistiken',stS:'Deine Sammlung',tot:'Kaffees gesamt',avg:'Ø SCA',best:'Bester SCA',cnt:'Länder',top:'Top-Kaffees nach SCA',del2:'🗑 Löschen',edit:'✏️ Bearbeiten',deld:'Kaffee gelöscht',saved:'Kaffee gespeichert ✓',upd:'Kaffee aktualisiert ✓',nn:'Kaffeename eingeben',fok:' Felder ausgefüllt',nrd:'Etikett nicht lesbar. Besseres Foto versuchen.',pmT:'Zubereitung hinzufügen',pmMet:'Methode / Kaffeemaschine',pmR:'Verhältnis',pmTp:'Temp. (°C)',pmEx:'Extraktion (Sek.)',pmAl:'Höhe (m.ü.M.)',pmSca:'SCA-Profil',pmAr:'Aroma',pmSa:'Geschmack',pmAc:'Säure',pmCu:'Körper',pmNo:'Notizen zu dieser Zubereitung',pmSave:'Zubereitung speichern',method:'Methode',ratio:'Verhältnis',temp:'Temperatur',altitude:'Höhe',scaProfile:'SCA-Profil',cupping:'Verkostungsnotizen',misc:'Notizen',place:'Ort',preps:'Zubereitungen',removedPrep:'Zubereitung entfernt',}
+};
+
+let lang='es', cafes=[], filter='all', editId=null, photoUrl=null, mode='quick', rebuy=null, preps=[], editPrepIdx=null;
+const BG=['#C68642','#7B3F00','#3E1F00','#D4A843','#A0522D','#8B4513'];
+const t=k=>(T[lang]||T.es)[k]||k;
+
+// ─── LANG ───────────────────────────────────────────────────────
+function setLang(l){
+  lang=l;
+  ['es','en','de'].forEach(x=>document.getElementById('lb-'+x).classList.toggle('active',x===l));
+  applyLang(); renderHome(); renderStats();
+}
+function applyLang(){
+  const m={
+    'tb-brand':t('brand'),'tb-sub':cafes.length+t('sub'),
+    'ch-all':t('all'),'ch-q':t('q'),'ch-e':t('e'),
+    'lnk-st':t('stLink'),'hc':t('hc'),'em-msg':t('em'),
+    'lbl-bk':t('bk'),'ft':editId?t('ed'):t('nw'),
+    'lbl-mq':t('mq'),'lbl-me':t('me'),
+    'lbl-ph':t('ph'),'lbl-cam':t('cam'),'lbl-gal':t('gal'),
+    'ai-tx':t('ai'),'lbl-aif':t('aif'),
+    'lbl-pkg':t('pkg'),'lbl-nm':t('nm'),'lbl-ts':t('ts'),'lbl-pr':t('pr'),'lbl-gr':t('gr'),'lbl-lu':t('lu'),
+    'lbl-ori':t('ori'),'lbl-pa':t('pa'),'lbl-re':t('re'),'lbl-va':t('va'),'lbl-pc':t('pc'),
+    'lbl-met-s':t('mets'),'lbl-met':t('met'),'lbl-no':t('noq'),
+    'lbl-preps-title':t('prepsT'),'lbl-add-prep':t('addPrep'),
+    'lbl-sca-g':t('scaG'),'lbl-desc-s':t('descS'),
+    'lbl-dc':t('dc'),'lbl-da':t('da'),'lbl-dn':t('dn'),'lbl-noe':t('noe'),
+    'lbl-rb':t('rb'),'save-btn':t('save'),
+    'nbl-h':t('navH'),'nbl-n':t('navN'),'nbl-s':t('navS'),
+    'lbl-st-t':t('stT'),'lbl-st-s':t('stS'),'lbl-top':t('top'),
+    'lbl-pm-t':t('pmT'),'lbl-pm-met':t('pmMet'),'lbl-pm-r':t('pmR'),
+    'lbl-pm-t2':t('pmTp'),'lbl-pm-ex':t('pmEx'),'lbl-pm-al':t('pmAl'),
+    'lbl-pm-sca':t('pmSca'),'lbl-pm-ar':t('pmAr'),'lbl-pm-sa':t('pmSa'),
+    'lbl-pm-ac':t('pmAc'),'lbl-pm-cu':t('pmCu'),'lbl-pm-no':t('pmNo'),
+    'lbl-pm-save':t('pmSave'),
+  };
+  Object.entries(m).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.textContent=val;});
+  const si=document.getElementById('search'); if(si) si.placeholder=t('search');
+  renderPrepList();
+}
+
+// ─── DATA ────────────────────────────────────────────────────────
+// ─── INDEXEDDB ───────────────────────────────────────────────────
+let db=null;
+function initDB(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open('CafeDiario',1);
+    req.onupgradeneeded=e=>{ const d=e.target.result; if(!d.objectStoreNames.contains('cafes')) d.createObjectStore('cafes',{keyPath:'id'}); };
+    req.onsuccess=e=>{ db=e.target.result; res(db); };
+    req.onerror=()=>rej(req.error);
+  });
+}
+async function loadData(){
+  try{
+    await initDB();
+    const tx=db.transaction('cafes','readonly');
+    const store=tx.objectStore('cafes');
+    const req=store.getAll();
+    req.onsuccess=()=>{
+      cafes=req.result.sort((a,b)=>b.id-a.id);
+      renderHome(); renderStats(); applyLang();
+    };
+  }catch(e){
+    // fallback localStorage
+    try{cafes=JSON.parse(localStorage.getItem('cj_cafes')||'[]');}catch(e2){cafes=[];}
+    renderHome(); renderStats(); applyLang();
+  }
+}
+async function saveData(){
+  document.getElementById('tb-sub').textContent=cafes.length+t('sub');
+  try{
+    if(!db) await initDB();
+    const tx=db.transaction('cafes','readwrite');
+    const store=tx.objectStore('cafes');
+    // Clear and re-add all (simplest approach for small collections)
+    store.clear();
+    cafes.forEach(c=>store.put(c));
+    tx.oncomplete=()=>{}; // success silent
+    tx.onerror=()=>toast('❌ Error guardando en IndexedDB');
+  }catch(e){
+    // fallback localStorage with compression
+    try{
+      const slim=cafes.map(c=>({...c,foto:c.foto?c.foto.substring(0,c.foto.length):null}));
+      localStorage.setItem('cj_cafes',JSON.stringify(slim));
+    }catch(e2){ toast('❌ Sin espacio. Libera fotos en Stats.'); }
+  }
+}
+
+async function saveSingleCafe(cafe){
+  try{
+    if(!db) await initDB();
+    const tx=db.transaction('cafes','readwrite');
+    tx.objectStore('cafes').put(cafe);
+  }catch(e){ await saveData(); }
+}
+
+async function deleteSingleCafe(id){
+  try{
+    if(!db) await initDB();
+    const tx=db.transaction('cafes','readwrite');
+    tx.objectStore('cafes').delete(id);
+  }catch(e){ await saveData(); }
+}
+
+// ─── SCREENS ─────────────────────────────────────────────────────
+function showSc(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sc-'+n).classList.add('active');
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  const nb=document.getElementById('nb-'+n); if(nb) nb.classList.add('active');
+  document.querySelector('.fab').style.display=(n==='home')?'flex':'none';
+  if(n==='home') renderHome();
+  if(n==='stats') renderStats();
+  applyLang();
+}
+function newCafe(){ editId=null; resetForm(); showSc('register'); }
+
+// ─── MODE ────────────────────────────────────────────────────────
+function setMode(m){
+  mode=m;
+  document.getElementById('mo-q').className='mo'+(m==='quick'?' aq':'');
+  document.getElementById('mo-e').className='mo'+(m==='expert'?' ae':'');
+  document.getElementById('exp-sec').classList.toggle('vis',m==='expert');
+  document.getElementById('qnw').style.display=m==='quick'?'block':'none';
+}
+
+// ─── FILTER ──────────────────────────────────────────────────────
+function setFilter(f,el){ filter=f; document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); renderHome(); }
+
+// ─── HOME ────────────────────────────────────────────────────────
+function renderHome(){
+  const q=document.getElementById('search').value.toLowerCase();
+  const list=cafes.filter(c=>{
+    const mQ=!q||[c.nom,c.pai,c.tos,c.reg].some(x=>x&&x.toLowerCase().includes(q));
+    let mF=filter==='all'||(filter==='quick'&&c.mode==='quick')||(filter==='expert'&&c.mode==='expert');
+    return mQ&&mF;
+  });
+  document.getElementById('hc').textContent=t('hc')+' ('+list.length+')';
+  const cg=document.getElementById('cg'), es=document.getElementById('es');
+  if(!list.length){cg.innerHTML='';es.style.display='block';return;}
+  es.style.display='none';
+  cg.innerHTML=list.map((c,i)=>{
+    const sca=bestSCA(c);
+    const scaTxt=sca?sca.toFixed(1):'—';
+    const bg=BG[i%BG.length];
+    const img=c.foto?`<img src="${c.foto}" style="width:100%;height:100%;object-fit:cover">`:`<span style="font-size:32px">☕</span>`;
+    const rb=c.rebuy===true?`<span class="rby">✅</span>`:c.rebuy===false?`<span class="rbn">❌</span>`:'';
+    const prepCount=c.mode==='expert'&&c.preps&&c.preps.length>1?`<span style="font-size:9px;color:var(--muted);margin-left:3px">${c.preps.length} ${t('preps')}</span>`:'';
+    return `<div class="cc" onclick="showDetail('${c.id}')">
+      <div class="ci" style="background:${bg}">${img}<span class="mbg ${c.mode==='expert'?'e':'q'}">${c.mode==='expert'?'Expert':'Quick'}</span><span class="sbg">${scaTxt}</span></div>
+      <div class="cb"><div class="cn">${c.nom||'—'}</div><div class="co">${[c.pai,c.reg].filter(Boolean).join(' · ')||'—'}</div>
+      <span class="sp">⭐ ${scaTxt}</span>${rb}${prepCount}</div>
+    </div>`;
+  }).join('');
+}
+function bestSCA(c){
+  if(c.mode==='expert'&&c.preps&&c.preps.length) return c.preps.reduce((mx,p)=>Math.max(mx,p.scaTotal||0),0)||null;
+  return c.scaTotal||null;
+}
+function avgSCA(c){
+  if(c.mode==='expert'&&c.preps&&c.preps.length){const s=c.preps.filter(p=>p.scaTotal).map(p=>p.scaTotal);return s.length?s.reduce((a,b)=>a+b,0)/s.length:null;}
+  return c.scaTotal||null;
+}
+
+// ─── DETAIL ──────────────────────────────────────────────────────
+function showDetail(id){
+  const c=cafes.find(x=>x.id===id); if(!c) return;
+  const sca=bestSCA(c); const scaTxt=sca?sca.toFixed(1):'—';
+  const img=c.foto?`<img src="${c.foto}">`:`<span style="font-size:28px">☕</span>`;
+  const tags=[c.pro,c.var,c.reg].filter(Boolean).map(x=>`<span class="tag">${x}</span>`).join('');
+  const bw=v=>`${((v-6)/4*100).toFixed(0)}%`;
+  const prepsHTML=(c.mode==='expert'&&c.preps&&c.preps.length)?c.preps.map((p,i)=>`
+    <div class="prep-detail-card">
+      <div class="prep-detail-title"><span class="pnum">#${i+1}</span>${p.met||'—'} ${p.scaTotal?`<span class="sp" style="margin-left:auto">⭐ ${p.scaTotal.toFixed(1)}</span>`:''}</div>
+      <div class="ig">
+        ${p.rat?`<div class="ii"><div class="il">${t('ratio')}</div><div class="iv">${p.rat}</div></div>`:''}
+        ${p.tmp?`<div class="ii"><div class="il">${t('temp')}</div><div class="iv">${p.tmp}°C</div></div>`:''}
+        ${p.ext?`<div class="ii"><div class="il">${t('altitude').includes('ltitud')?'Extracción':'Extraction'}</div><div class="iv">${p.ext}s</div></div>`:''}
+        ${p.alt?`<div class="ii"><div class="il">${t('altitude')}</div><div class="iv">${p.alt}m</div></div>`:''}
+      </div>
+      ${p.scaTotal?`<div class="br"><span class="bl">${t('pmAr')}</span><div class="bbg"><div class="bf" style="width:${bw(p.ar||8)}"></div></div><span class="bv">${p.ar}</span></div>
+      <div class="br"><span class="bl">${t('pmSa')}</span><div class="bbg"><div class="bf" style="width:${bw(p.sa||8)}"></div></div><span class="bv">${p.sa}</span></div>
+      <div class="br"><span class="bl">${t('pmAc')}</span><div class="bbg"><div class="bf" style="width:${bw(p.ac||8)}"></div></div><span class="bv">${p.ac}</span></div>
+      <div class="br"><span class="bl">${t('pmCu')}</span><div class="bbg"><div class="bf" style="width:${bw(p.cu||8)}"></div></div><span class="bv">${p.cu}</span></div>`:''}
+      ${p.not?`<div class="nb2"><div class="nl">${t('misc')}</div><div class="nt">${p.not}</div></div>`:''}
+    </div>`).join(''):'';
+  const descHTML=c.descriptors&&Object.values(c.descriptors).some(a=>a.length)?`<div class="nb2"><div class="nl">${t('descS')}</div><div class="nt">${Object.entries(c.descriptors).filter(([,v])=>v.length).map(([k,v])=>`<b>${k}:</b> ${v.join(', ')}`).join(' · ')}</div></div>`:'';
+  const rb=c.rebuy===true?`<span class="rby" style="font-size:12px;padding:4px 10px">✅ ${t('rb').split('?')[0]}: Sí</span>`:c.rebuy===false?`<span class="rbn" style="font-size:12px;padding:4px 10px">❌ ${t('rb').split('?')[0]}: No</span>`:'';
+  document.getElementById('dc').innerHTML=`
+    <div class="dh">
+      <div class="dpkg">${img}</div>
+      <div><div class="dn">${c.nom||'—'}</div><div class="dr">${c.tos||''} · ${c.pai||''}</div><div class="tagrow">${tags}</div></div>
+    </div>
+    <button class="bk" onclick="showSc('home')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> ${t('bk')}</button>
+    <div class="ig">
+      <div class="ii"><div class="il">${t('method')}</div><div class="iv">${c.met||'—'}</div></div>
+      <div class="ii"><div class="il">SCA</div><div class="iv" style="color:var(--green)">${scaTxt} pts</div></div>
+    </div>
+    ${prepsHTML}
+    ${c.mode==='quick'&&c.noq?`<div class="nb2"><div class="nl">${t('misc')}</div><div class="nt">${c.noq}</div></div>`:''}
+    ${c.noe?`<div class="nb2"><div class="nl">${t('cupping')}</div><div class="nt">${c.noe}</div></div>`:''}
+    ${descHTML}
+    <div class="pr"><span style="font-size:12px;color:var(--muted)">${c.lug||'—'}${c.gra?' · '+c.gra+'g':''}</span><span style="font-size:15px;font-weight:500;color:var(--caramel);font-family:'Playfair Display',serif">${c.pre?'€ '+parseFloat(c.pre).toFixed(2):'—'}</span></div>
+    ${rb?`<div style="margin-bottom:10px">${rb}</div>`:''}
+    <div style="display:flex;gap:8px">
+      <button onclick="editCafe('${c.id}')" style="flex:1;padding:9px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">${t('edit')}</button>
+      <button onclick="delCafe('${c.id}')" style="flex:1;padding:9px;border:1px solid #FFCDD2;border-radius:var(--r);background:#FFF5F5;color:#C62828;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">${t('del2')}</button>
+    </div>`;
+  showSc('detail');
+}
+function editCafe(id){
+  const c=cafes.find(x=>x.id===id); if(!c) return;
+  editId=id; resetForm(false);
+  setMode(c.mode||'quick');
+  ['nom','tos','pre','gra','lug','pai','reg','var','noe','noq'].forEach(k=>{ const el=document.getElementById('f-'+k); if(el) el.value=c[k]||''; });
+  document.getElementById('f-pro').value=c.pro||'';
+  document.getElementById('f-met').value=c.met||'';
+  preps=[...(c.preps||[])];
+  rebuy=c.rebuy??null; updateRebuy();
+  photoUrl=c.foto||null; updatePhotoZone();
+  document.getElementById('aib').disabled=!photoUrl;
+  if(c.descriptors) Object.entries(c.descriptors).forEach(([,vals])=>vals.forEach(v=>document.querySelectorAll('.dc').forEach(dc=>{if(dc.textContent===v)dc.classList.add('active');})));
+  renderPrepList(); updateAvgSCA();
+  showSc('register');
+}
+function delCafe(id){
+  if(!confirm(t('del2')+'?')) return;
+  cafes=cafes.filter(c=>c.id!==id); deleteSingleCafe(id); document.getElementById('tb-sub').textContent=cafes.length+t('sub'); toast(t('deld')); showSc('home');
+}
+
+// ─── STATS ───────────────────────────────────────────────────────
+function renderStats(){
+  if(!cafes.length){ document.getElementById('sgrid').innerHTML=`<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;padding:20px">${t('em')}</div>`; document.getElementById('top-list').innerHTML=''; return; }
+  const scores=cafes.map(c=>avgSCA(c)).filter(Boolean);
+  const avg=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—';
+  const best=scores.length?Math.max(...scores).toFixed(1):'—';
+  const cnt=[...new Set(cafes.map(c=>c.pai).filter(Boolean))].length;
+  document.getElementById('sgrid').innerHTML=`<div class="sc"><div class="sl">${t('tot')}</div><div class="sv">${cafes.length}</div></div><div class="sc"><div class="sl">${t('avg')}</div><div class="sv">${avg}</div></div><div class="sc"><div class="sl">${t('best')}</div><div class="sv">${best}</div></div><div class="sc"><div class="sl">${t('cnt')}</div><div class="sv">${cnt}</div></div>`;
+  const top=[...cafes].map(c=>({...c,_sca:bestSCA(c)||0})).sort((a,b)=>b._sca-a._sca).slice(0,5);
+  document.getElementById('top-list').innerHTML=top.map(c=>`<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)"><span style="font-size:18px">☕</span><div style="flex:1"><div style="font-size:12px;font-weight:500;color:#222">${c.nom||'—'}</div><div style="font-size:10px;color:var(--muted)">${c.pai||''} · ${c.mode==='expert'?'Expert':'Quick'}</div></div><span style="font-size:13px;font-weight:500;color:var(--green)">${c._sca.toFixed(1)} pts</span></div>`).join('');
+  // Storage info
+  const si=document.getElementById('storage-info');
+  if(si){
+    const {kb,pct}=storageUsed();
+    const col=pct>80?'#C62828':pct>50?'#E65100':'var(--green)';
+    si.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:5px"><span>${kb} KB usados de ~5.000 KB</span><span style="color:${col};font-weight:500">${pct}%</span></div><div style="height:5px;background:var(--border);border-radius:3px"><div style="height:5px;border-radius:3px;background:${col};width:${pct}%"></div></div>`;
+  }
+}
+
+// ─── PHOTO ───────────────────────────────────────────────────────
+function handlePhoto(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=380, q=0.5;
+      const ratio=Math.min(1,MAX/Math.max(img.width,img.height));
+      const w=Math.round(img.width*ratio), h=Math.round(img.height*ratio);
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      photoUrl=cv.toDataURL('image/jpeg',q);
+      updatePhotoZone();
+      document.getElementById('aib').disabled=false;
+      const kb=Math.round(photoUrl.length*0.75/1024);
+      toast('📸 Foto lista ('+kb+' KB)');
+    };
+    img.src=ev.target.result;
+  };
+  r.readAsDataURL(f);
+}
+function removePhoto(){ photoUrl=null; updatePhotoZone(); document.getElementById('aib').disabled=true; }
+function updatePhotoZone(){
+  const z=document.getElementById('pz');
+  const pb=document.getElementById('photo-btns');
+  if(photoUrl){
+    z.innerHTML=`<img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover"><div class="pz-ov"><span style="color:#fff;font-size:10px">✓ foto</span></div>`;
+    pb.innerHTML=`<button onclick="document.getElementById('pc').click()">📷 ${t('cam')}</button><button onclick="document.getElementById('pg').click()">🖼️ ${t('gal')}</button><button class="del-photo" onclick="removePhoto()">✕ ${t('del')}</button>`;
+  } else {
+    z.innerHTML=`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--muted)" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span class="pz-lbl">${t('ph')}</span>`;
+    pb.innerHTML=`<button onclick="document.getElementById('pc').click()">📷 ${t('cam')}</button><button onclick="document.getElementById('pg').click()">🖼️ ${t('gal')}</button>`;
+  }
+}
+
+// ─── AI ──────────────────────────────────────────────────────────
+async function doAI(){
+  if(!photoUrl) return;
+  const btn=document.getElementById('aib');
+  document.getElementById('ai-tx').textContent=t('aiA');
+  document.getElementById('ai-ic').innerHTML='<span class="spin"></span>';
+  btn.disabled=true;
+  try{
+    const b64=photoUrl.split(',')[1], mime=(photoUrl.match(/data:([^;]+);/)||[])[1]||'image/jpeg';
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:700,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mime,data:b64}},{type:'text',text:'Analyze this specialty coffee package. Extract ONLY clearly visible text from label. Respond ONLY as JSON no markdown:\n{"nombre":"","tostador":"","pais":"","region":"","variedad":"","proceso":"","altitud":"","notas_cata":"","descripcion_ia":""}'}]}]})});
+    const data=await res.json(); const tx=data.content?.[0]?.text||'';
+    let info={}; try{info=JSON.parse(tx.replace(/```json|```/g,'').trim());}catch(e){}
+    const map={nombre:'f-nom',tostador:'f-tos',pais:'f-pai',region:'f-reg',variedad:'f-var',notas_cata:'f-noe'};
+    const filled=[];
+    Object.entries(map).forEach(([k,id])=>{ if(info[k]){document.getElementById(id).value=info[k];filled.push(k);} });
+    if(info.proceso){document.getElementById('f-pro').value=info.proceso;filled.push('proceso');}
+    if(info.altitud){document.getElementById('f-'+('nom')).value||''; /* altitud goes to prep modal */ filled.push('altitud');}
+    const ar=document.getElementById('air'); document.getElementById('air-tx').textContent=filled.length?filled.join(', ')+(info.descripcion_ia?' — '+info.descripcion_ia:''):t('nrd'); ar.style.display='block';
+    if(filled.length) toast('✨ '+filled.length+t('fok'));
+  }catch(e){ toast('Error IA'); }
+  btn.disabled=false; document.getElementById('ai-tx').textContent=t('ai'); document.getElementById('ai-ic').textContent='✨';
+}
+
+// ─── REBUY ───────────────────────────────────────────────────────
+function setRebuy(v){ rebuy=v; updateRebuy(); }
+function updateRebuy(){ document.getElementById('rb-y').classList.toggle('active',rebuy===true); document.getElementById('rb-n').classList.toggle('active',rebuy===false); }
+
+// ─── PREP MODAL ──────────────────────────────────────────────────
+function pmSCA(){
+  const v=['ar','sa','ac','cu'].map(k=>{ const sl=document.getElementById('pm-'+k); const n=parseFloat(sl.value); document.getElementById('pm-'+k+'-v').textContent=n.toFixed(1); return n; });
+  document.getElementById('pm-sca-badge').textContent=((v[0]+v[1]+v[2]+v[3])*2.5).toFixed(1)+' / 100';
+}
+function openPrepModal(idx=null){
+  editPrepIdx=idx;
+  document.getElementById('lbl-pm-t').textContent=idx!==null?'✏️ Editar preparación':t('pmT');
+  if(idx!==null){
+    const p=preps[idx];
+    document.getElementById('pm-met').value=p.met||'';
+    document.getElementById('pm-rat').value=p.rat||'';
+    document.getElementById('pm-tmp').value=p.tmp||'';
+    document.getElementById('pm-ext').value=p.ext||'';
+    document.getElementById('pm-alt').value=p.alt||'';
+    document.getElementById('pm-not').value=p.not||'';
+    ['ar','sa','ac','cu'].forEach(k=>{ document.getElementById('pm-'+k).value=p[k]||8; });
+  } else {
+    ['pm-met','pm-rat','pm-tmp','pm-ext','pm-alt','pm-not'].forEach(id=>document.getElementById(id).value='');
+    ['ar','sa','ac','cu'].forEach(k=>document.getElementById('pm-'+k).value=8);
+  }
+  pmSCA();
+  document.getElementById('prep-modal').style.display='flex';
+}
+function closePrepModal(){ document.getElementById('prep-modal').style.display='none'; editPrepIdx=null; }
+function addPrep(){
+  const met=document.getElementById('pm-met').value;
+  if(!met){ toast('Selecciona el método'); return; }
+  const ar=parseFloat(document.getElementById('pm-ar').value);
+  const sa=parseFloat(document.getElementById('pm-sa').value);
+  const ac=parseFloat(document.getElementById('pm-ac').value);
+  const cu=parseFloat(document.getElementById('pm-cu').value);
+  const prep={met,rat:document.getElementById('pm-rat').value,tmp:document.getElementById('pm-tmp').value,ext:document.getElementById('pm-ext').value,alt:document.getElementById('pm-alt').value,not:document.getElementById('pm-not').value,ar,sa,ac,cu,scaTotal:(ar+sa+ac+cu)*2.5};
+  if(editPrepIdx!==null) preps[editPrepIdx]=prep; else preps.push(prep);
+  closePrepModal(); renderPrepList(); updateAvgSCA();
+}
+function removePrep(i){ preps.splice(i,1); renderPrepList(); updateAvgSCA(); toast(t('removedPrep')); }
+function renderPrepList(){
+  const pl=document.getElementById('prep-list'); if(!pl) return;
+  pl.innerHTML=preps.map((p,i)=>`<div class="prep-item">
+    <div class="prep-item-hdr"><span class="prep-item-title">#${i+1} ${p.met}</span><div style="display:flex;gap:6px"><button onclick="openPrepModal(${i})" style="background:none;border:none;color:var(--caramel);font-size:14px;cursor:pointer">✏️</button><button class="prep-item-del" onclick="removePrep(${i})">✕</button></div></div>
+    <div class="prep-item-info">${[p.rat?t('ratio')+': '+p.rat:'',p.tmp?t('temp')+': '+p.tmp+'°C':'',p.ext?'Ext: '+p.ext+'s':''].filter(Boolean).join(' · ')}</div>
+    ${p.scaTotal?`<span class="prep-sca">⭐ ${p.scaTotal.toFixed(1)} pts</span>`:''}
+  </div>`).join('');
+  document.getElementById('add-prep-btn').innerHTML=`＋ <span>${t('addPrep')}</span>`;
+}
+function updateAvgSCA(){
+  const box=document.getElementById('sca-global-box');
+  if(!preps.length){ box.style.display='none'; return; }
+  const scores=preps.filter(p=>p.scaTotal).map(p=>p.scaTotal);
+  if(!scores.length){ box.style.display='none'; return; }
+  box.style.display='block';
+  document.getElementById('sca-avg-badge').textContent=(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1)+' / 100';
+}
+
+// ─── SAVE CAFE ───────────────────────────────────────────────────
+function saveCafe(){
+  const nom=document.getElementById('f-nom').value.trim();
+  if(!nom){ toast(t('nn')); return; }
+  const isE=mode==='expert';
+  const desc={};
+  if(isE){
+    desc.cuerpo=[...document.querySelectorAll('#desc-c .dc.active')].map(x=>x.textContent);
+    desc.acidez=[...document.querySelectorAll('#desc-a .dc.active')].map(x=>x.textContent);
+    aroma:[...document.querySelectorAll('#desc-n .dc.active')].map(x=>x.textContent);
+    desc.aroma=[...document.querySelectorAll('#desc-n .dc.active')].map(x=>x.textContent);
+  }
+  const cafe={
+    id:editId||Date.now().toString(),
+    fecha:new Date().toISOString().split('T')[0],
+    mode, foto:photoUrl,
+    nom, tos:document.getElementById('f-tos').value,
+    pre:document.getElementById('f-pre').value,
+    gra:document.getElementById('f-gra').value,
+    lug:document.getElementById('f-lug').value,
+    pai:document.getElementById('f-pai').value,
+    reg:document.getElementById('f-reg').value,
+    var:document.getElementById('f-var').value,
+    pro:document.getElementById('f-pro').value,
+    met:document.getElementById('f-met').value,
+    noq:document.getElementById('f-noq').value,
+    rebuy,
+    ...(isE?{preps,noe:document.getElementById('f-noe').value,descriptors:desc}:{})
+  };
+  const isEdit=!!editId;
+  if(isEdit) cafes=cafes.map(c=>c.id===editId?cafe:c); else cafes.unshift(cafe);
+  saveSingleCafe(cafe);
+  document.getElementById('tb-sub').textContent=cafes.length+t('sub');
+  editId=null; toast(isEdit?t('upd'):t('saved')); showSc('home');
+}
+
+// ─── RESET ───────────────────────────────────────────────────────
+function resetForm(full=true){
+  if(full){editId=null;photoUrl=null;rebuy=null;preps=[];}
+  ['f-nom','f-tos','f-pre','f-gra','f-lug','f-pai','f-reg','f-var','f-noq','f-noe'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('f-pro').value='';
+  document.getElementById('f-met').value='';
+  document.getElementById('air').style.display='none';
+  document.querySelectorAll('.dc').forEach(c=>c.classList.remove('active'));
+  updateRebuy(); updatePhotoZone(); renderPrepList(); updateAvgSCA();
+  document.getElementById('aib').disabled=true;
+  setMode('quick');
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────
+function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2800); }
+
+function clearPhotos(){
+  if(!confirm('¿Eliminar todas las fotos para liberar espacio? Los datos del café se conservan.')) return;
+  cafes=cafes.map(c=>({...c,foto:null}));
+  photoUrl=null;
+  saveData(); renderStats();
+  toast('🗑 Fotos eliminadas. Espacio liberado.');
+}
+
+function storageUsed(){
+  // Estimate from cafes array
+  try{
+    const data=JSON.stringify(cafes);
+    const kb=Math.round(data.length*0.75/1024);
+    const pct=Math.min(100,Math.round(kb/51200*100)); // IndexedDB ~50MB
+    return {kb,pct};
+  }catch(e){return {kb:0,pct:0};}
+}
+
+loadData(); showSc('home');
+
+// ─── SERVICE WORKER ───────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(()=>console.log('SW registered'))
+      .catch(e=>console.log('SW error:', e));
+  });
+}
+
+// ─── PWA INSTALL PROMPT ──────────────────────────────────────────
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  // Show install banner after 3 seconds
+  setTimeout(()=>{
+    if(deferredPrompt) showInstallBanner();
+  }, 3000);
+});
+
+function showInstallBanner(){
+  const banner=document.getElementById('install-banner');
+  if(banner) banner.style.display='flex';
+}
+
+function installApp(){
+  const banner=document.getElementById('install-banner');
+  if(banner) banner.style.display='none';
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(r=>{
+      if(r.outcome==='accepted') toast('✅ App instalada');
+      deferredPrompt=null;
+    });
+  }
+}
+
+function dismissBanner(){
+  const banner=document.getElementById('install-banner');
+  if(banner) banner.style.display='none';
+}
+
+// ─── EXPORT CSV ──────────────────────────────────────────────────
+function exportCSV(){
+  if(!cafes.length){ toast('No hay cafés para exportar'); return; }
+  const headers=[
+    'Fecha','Nombre','Tostador','País','Región','Variedad','Proceso',
+    'Precio (€)','Gramos','Lugar de compra','Método',
+    'Modo','Rebuy','SCA Total',
+    'Prep 1 - Método','Prep 1 - Ratio','Prep 1 - Temp','Prep 1 - Extracción','Prep 1 - SCA',
+    'Prep 2 - Método','Prep 2 - Ratio','Prep 2 - Temp','Prep 2 - Extracción','Prep 2 - SCA',
+    'Prep 3 - Método','Prep 3 - Ratio','Prep 3 - Temp','Prep 3 - Extracción','Prep 3 - SCA',
+    'Descriptores Cuerpo','Descriptores Acidez','Notas Aromáticas',
+    'Notas de cata','Notas personales'
+  ];
+
+  const rows=cafes.map(c=>{
+    const sca=c.mode==='expert'&&c.preps&&c.preps.length
+      ? (c.preps.reduce((a,p)=>a+(p.scaTotal||0),0)/c.preps.length).toFixed(1)
+      : (c.scaTotal||'');
+    const prepsData=[];
+    for(let i=0;i<3;i++){
+      const p=(c.preps||[])[i];
+      prepsData.push(p?p.met:'',p?p.rat:'',p?p.tmp:'',p?p.ext:'',p?p.scaTotal?.toFixed(1):'');
+    }
+    const desc=c.descriptors||{};
+    return [
+      c.fecha||'',
+      c.nom||'',c.tos||'',c.pai||'',c.reg||'',c.var||'',c.pro||'',
+      c.pre||'',c.gra||'',c.lug||'',c.met||'',
+      c.mode==='expert'?'Expert':'Rápido',
+      c.rebuy===true?'Sí':c.rebuy===false?'No':'',
+      sca,
+      ...prepsData,
+      (desc.cuerpo||[]).join('; '),
+      (desc.acidez||[]).join('; '),
+      (desc.aroma||[]).join('; '),
+      c.noe||'',c.noq||''
+    ].map(v=>'"'+String(v).replace(/"/g,'""')+'"');
+  });
+
+  const csv='﻿'+[headers.map(h=>'"'+h+'"'),...rows].map(r=>r.join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='DiarioCafe_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ CSV descargado ('+cafes.length+' cafés)');
+}
+</script>
+</body>
+</html>
