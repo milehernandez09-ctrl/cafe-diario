@@ -169,6 +169,13 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;min-height:100vh;m
 .sc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 13px}
 .sl{font-size:10px;color:var(--muted);margin-bottom:3px}
 .sv{font-size:21px;color:var(--caramel);font-family:'Playfair Display',serif}
+.ai-mode-card{display:flex;align-items:center;gap:12px;padding:12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s;background:var(--surface)}
+.ai-mode-card.selected{border-color:var(--caramel);background:var(--cream2)}
+.ai-mode-icon{font-size:22px;flex-shrink:0;width:32px;text-align:center}
+.ai-mode-info{flex:1}
+.ai-mode-title{font-size:13px;font-weight:500;color:#222;margin-bottom:2px}
+.ai-mode-desc{font-size:11px;color:var(--muted);line-height:1.4}
+.ai-mode-check{font-size:16px;color:var(--caramel);font-weight:700;flex-shrink:0}
 .toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%);background:var(--espresso);color:var(--gold);padding:9px 18px;border-radius:18px;font-size:12px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 </style>
@@ -218,6 +225,7 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;min-height:100vh;m
   <input type="file" id="pg" accept="image/*" style="display:none" onchange="handlePhoto(event)">
   <!-- AI -->
   <button class="aib" id="aib" onclick="doAI()" disabled><span id="ai-ic">✨</span><span id="ai-tx">Analizar con IA</span></button>
+  <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:-8px;margin-bottom:8px" id="ai-mode-label">Modo: manual</div>
   <div class="air" id="air"><div class="air-lbl" id="lbl-aif">✨ La IA encontró</div><div id="air-tx"></div></div>
   <!-- BASE FIELDS -->
   <div class="fs"><div class="fsl" id="lbl-pkg">El paquete</div>
@@ -351,64 +359,93 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;min-height:100vh;m
 
 <!-- SETTINGS -->
 <div class="screen" id="sc-settings">
-  <div style="margin-bottom:18px">
+  <div style="margin-bottom:16px">
     <div style="font-family:'Playfair Display',serif;font-size:19px;color:#222;margin-bottom:2px" id="lbl-cfg-t">Configuración</div>
-    <div style="font-size:12px;color:var(--muted)" id="lbl-cfg-s">API Key · Preferencias</div>
+    <div style="font-size:12px;color:var(--muted)" id="lbl-cfg-s">Modo de análisis · API Keys</div>
   </div>
 
-  <!-- API KEY CARD -->
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-      <span style="font-size:20px">✨</span>
-      <div>
-        <div style="font-size:13px;font-weight:500;color:#222" id="lbl-ak-t">Análisis con IA</div>
-        <div style="font-size:11px;color:var(--muted)" id="lbl-ak-s">Reconocimiento de etiquetas con Claude AI</div>
+  <!-- MODE SELECTOR -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">
+    <div style="font-size:12px;font-weight:500;color:#333;margin-bottom:12px">🔍 Modo de análisis de fotos</div>
+
+    <!-- MANUAL -->
+    <div class="ai-mode-card" id="mode-card-manual" onclick="setAIMode('manual')">
+      <div class="ai-mode-icon">✏️</div>
+      <div class="ai-mode-info">
+        <div class="ai-mode-title">Solo manual</div>
+        <div class="ai-mode-desc">Sin IA — escribes los datos tú mismo. Sin configuración ni costos.</div>
       </div>
-      <span id="ai-status-dot" style="margin-left:auto;width:10px;height:10px;border-radius:50%;background:#ccc;flex-shrink:0"></span>
+      <div class="ai-mode-check" id="check-manual">✓</div>
     </div>
 
-    <div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:#5D4037;line-height:1.6" id="lbl-ak-info">
-      Para usar el análisis de fotos con IA necesitas una API key de Anthropic.
-      Es gratuita — incluye créditos iniciales para cientos de análisis.<br>
-      <a href="https://console.anthropic.ic.com" target="_blank" style="color:#7B3F00;font-weight:500">→ console.anthropic.com → API Keys → Create Key</a>
-    </div>
-
-    <div class="f" style="margin-bottom:10px">
-      <label id="lbl-ak-l" style="font-size:10px;color:var(--muted);margin-bottom:4px">Tu API Key (sk-ant-...)</label>
-      <div style="position:relative">
-        <input id="apikey-input" type="password" placeholder="sk-ant-api03-..." 
-          style="width:100%;padding:9px 40px 9px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;background:var(--surface)">
-        <button onclick="toggleKeyVisibility()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:0;line-height:1" id="eye-btn">👁️</button>
+    <!-- GOOGLE VISION -->
+    <div class="ai-mode-card" id="mode-card-google" onclick="setAIMode('google')" style="margin-top:8px">
+      <div class="ai-mode-icon">👁️</div>
+      <div class="ai-mode-info">
+        <div class="ai-mode-title">Google Vision <span style="background:#E8F5E9;color:#2E7D32;font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600">GRATIS</span></div>
+        <div class="ai-mode-desc">Lee texto de la etiqueta. 1.000 análisis gratis/mes con cuenta Google Cloud.</div>
       </div>
+      <div class="ai-mode-check" id="check-google" style="opacity:0">✓</div>
     </div>
 
+    <!-- CLAUDE AI -->
+    <div class="ai-mode-card" id="mode-card-claude" onclick="setAIMode('claude')" style="margin-top:8px">
+      <div class="ai-mode-icon">✨</div>
+      <div class="ai-mode-info">
+        <div class="ai-mode-title">Claude AI <span style="background:#FFF3E0;color:#E65100;font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600">MÁS PRECISO</span></div>
+        <div class="ai-mode-desc">Lee etiqueta + busca información adicional del café. ~$0.003 por análisis.</div>
+      </div>
+      <div class="ai-mode-check" id="check-claude" style="opacity:0">✓</div>
+    </div>
+  </div>
+
+  <!-- GOOGLE VISION CONFIG -->
+  <div id="google-config" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">
+    <div style="font-size:12px;font-weight:500;color:#333;margin-bottom:8px">👁️ Configurar Google Vision</div>
+    <div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:8px;padding:10px;margin-bottom:12px;font-size:11px;color:#2E7D32;line-height:1.6">
+      ✅ <strong>1.000 análisis gratis/mes</strong> — sin tarjeta de crédito el primer año (Google Cloud Free Tier)
+    </div>
+    <div style="font-size:11px;color:var(--muted);line-height:1.9;margin-bottom:12px">
+      1️⃣ Ve a <strong style="color:#1565C0">console.cloud.google.com</strong><br>
+      2️⃣ Crea proyecto → busca <strong>Vision API</strong> → Activar<br>
+      3️⃣ Ve a <strong>Credenciales</strong> → <strong>Crear API Key</strong><br>
+      4️⃣ Pégala aquí abajo
+    </div>
+    <div style="position:relative;margin-bottom:10px">
+      <input id="google-key-input" type="password" placeholder="AIzaSy..."
+        style="width:100%;padding:9px 40px 9px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;background:var(--surface)">
+      <button onclick="toggleGoogleKeyVisibility()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;padding:0;line-height:1" id="eye-google">👁️</button>
+    </div>
     <div style="display:flex;gap:8px">
-      <button onclick="saveApiKey()" style="flex:1;padding:10px;background:var(--caramel);border:none;border-radius:var(--r);color:#fff;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif" id="lbl-ak-save">Guardar key</button>
-      <button onclick="testApiKey()" style="flex:1;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--caramel);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif" id="lbl-ak-test">Probar</button>
+      <button onclick="saveGoogleKey()" style="flex:1;padding:9px;background:#1565C0;border:none;border-radius:var(--r);color:#fff;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Guardar</button>
+      <button onclick="testGoogleKey()" style="flex:1;padding:9px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:#1565C0;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Probar</button>
+    </div>
+    <div id="google-key-status" style="margin-top:8px;font-size:11px;text-align:center;color:var(--muted)"></div>
+  </div>
+
+  <!-- CLAUDE AI CONFIG -->
+  <div id="claude-config" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">
+    <div style="font-size:12px;font-weight:500;color:#333;margin-bottom:8px">✨ Configurar Claude AI</div>
+    <div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:8px;padding:10px;margin-bottom:12px;font-size:11px;color:#5D4037;line-height:1.6">
+      Obtén tu API key en <strong style="color:#7B3F00">console.anthropic.com</strong> → API Keys → Create Key
+    </div>
+    <div style="position:relative;margin-bottom:10px">
+      <input id="apikey-input" type="password" placeholder="sk-ant-api03-..."
+        style="width:100%;padding:9px 40px 9px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;background:var(--surface)">
+      <button onclick="toggleKeyVisibility()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;padding:0;line-height:1" id="eye-btn">👁️</button>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="saveApiKey()" style="flex:1;padding:9px;background:var(--caramel);border:none;border-radius:var(--r);color:#fff;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif" id="lbl-ak-save">Guardar</button>
+      <button onclick="testApiKey()" style="flex:1;padding:9px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--caramel);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif" id="lbl-ak-test">Probar</button>
     </div>
     <div id="key-status" style="margin-top:8px;font-size:11px;text-align:center;color:var(--muted)"></div>
   </div>
 
-  <!-- HOW TO GET KEY -->
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">
-    <div style="font-size:12px;font-weight:500;color:#333;margin-bottom:10px" id="lbl-howto">¿Cómo obtener tu API key? (gratis)</div>
-    <div style="font-size:12px;color:var(--muted);line-height:1.8">
-      <div>1️⃣ Ve a <strong style="color:var(--caramel)">console.anthropic.com</strong></div>
-      <div>2️⃣ Crea una cuenta gratuita</div>
-      <div>3️⃣ Ve a <strong>API Keys</strong> → <strong>Create Key</strong></div>
-      <div>4️⃣ Copia la key (empieza con <code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:11px">sk-ant-</code>)</div>
-      <div>5️⃣ Pégala arriba y toca <strong>Guardar key</strong></div>
-    </div>
-    <div style="margin-top:10px;padding:8px 10px;background:#E8F5E9;border-radius:8px;font-size:11px;color:#2E7D32">
-      💚 Anthropic da ~$5 en créditos gratis. Cada análisis de foto cuesta ~$0.003 — suficiente para <strong>+1.500 análisis</strong>.
-    </div>
-  </div>
-
-  <!-- PRIVACY NOTE -->
+  <!-- PRIVACY -->
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">
     <div style="font-size:12px;font-weight:500;color:#333;margin-bottom:6px">🔒 Privacidad</div>
     <div style="font-size:11px;color:var(--muted);line-height:1.7">
-      Tu API key se guarda <strong>solo en tu dispositivo</strong> (IndexedDB local). Nunca se envía a ningún servidor nuestro. Las fotos se envían directamente a la API de Anthropic solo cuando tocas "Analizar con IA".
+      Tus API keys se guardan <strong>solo en tu dispositivo</strong>. Las fotos van directamente a la API elegida — nunca pasan por servidores propios.
     </div>
   </div>
 
@@ -956,118 +993,351 @@ function dismissBanner(){
   if(banner) banner.style.display='none';
 }
 
-// ─── API KEY MANAGEMENT ──────────────────────────────────────────
-let apiKey = null;
+// ─── AI MODE MANAGEMENT ──────────────────────────────────────────
+let apiKey=null, googleKey=null, aiMode='manual';
 
 async function loadApiKey(){
   try{
     if(!db) await initDB();
     const tx=db.transaction('cafes','readonly');
-    const req=tx.objectStore('cafes').get('__apikey__');
-    req.onsuccess=()=>{
-      if(req.result){ apiKey=req.result.key; updateKeyStatus(); }
+    const store=tx.objectStore('cafes');
+    // Load Claude key
+    const r1=store.get('__apikey__');
+    r1.onsuccess=()=>{ if(r1.result){ apiKey=r1.result.key; } };
+    // Load Google key
+    const r2=store.get('__googlekey__');
+    r2.onsuccess=()=>{ if(r2.result){ googleKey=r2.result.key; } };
+    // Load mode
+    const r3=store.get('__aimode__');
+    r3.onsuccess=()=>{
+      if(r3.result) aiMode=r3.result.mode;
+      updateKeyStatus();
+      updateModeUI();
+      // Pre-fill inputs
+      setTimeout(()=>{
+        const ai=document.getElementById('apikey-input'); if(ai&&apiKey) ai.value=apiKey;
+        const gi=document.getElementById('google-key-input'); if(gi&&googleKey) gi.value=googleKey;
+      },300);
     };
   }catch(e){
-    // fallback localStorage
     apiKey=localStorage.getItem('cj_apikey')||null;
-    updateKeyStatus();
+    googleKey=localStorage.getItem('cj_googlekey')||null;
+    aiMode=localStorage.getItem('cj_aimode')||'manual';
+    updateKeyStatus(); updateModeUI();
   }
 }
 
+async function saveMode(m){
+  try{
+    if(!db) await initDB();
+    const tx=db.transaction('cafes','readwrite');
+    tx.objectStore('cafes').put({id:'__aimode__',mode:m});
+  }catch(e){ localStorage.setItem('cj_aimode',m); }
+}
+
+function setAIMode(m){
+  aiMode=m;
+  saveMode(m);
+  updateModeUI();
+  // Show/hide config panels
+  document.getElementById('google-config').style.display=m==='google'?'block':'none';
+  document.getElementById('claude-config').style.display=m==='claude'?'block':'none';
+}
+
+function updateModeUI(){
+  ['manual','google','claude'].forEach(m=>{
+    const card=document.getElementById('mode-card-'+m);
+    const check=document.getElementById('check-'+m);
+    if(card) card.classList.toggle('selected', aiMode===m);
+    if(check) check.style.opacity=aiMode===m?'1':'0';
+  });
+  // Show active config
+  const gc=document.getElementById('google-config');
+  const cc=document.getElementById('claude-config');
+  if(gc) gc.style.display=aiMode==='google'?'block':'none';
+  if(cc) cc.style.display=aiMode==='claude'?'block':'none';
+  updateKeyStatus();
+}
+
+function updateKeyStatus(){
+  const dot=document.getElementById('ai-status-dot');
+  if(!dot) return;
+  if(aiMode==='manual') dot.style.background='#8B7355';
+  else if(aiMode==='google') dot.style.background=googleKey?'#2E7D32':'#ccc';
+  else if(aiMode==='claude') dot.style.background=apiKey?'#2E7D32':'#ccc';
+}
+
+// ── CLAUDE KEY ───────────────────────────────────────────────────
 async function saveApiKey(){
   const input=document.getElementById('apikey-input');
   const key=input.value.trim();
   if(!key){ toast('Ingresa tu API key'); return; }
-  if(!key.startsWith('sk-ant-')){ toast('❌ La key debe empezar con sk-ant-'); return; }
+  if(!key.startsWith('sk-ant-')){ toast('❌ Debe empezar con sk-ant-'); return; }
   apiKey=key;
-  // Save to IndexedDB
   try{
     if(!db) await initDB();
     const tx=db.transaction('cafes','readwrite');
     tx.objectStore('cafes').put({id:'__apikey__',key});
   }catch(e){ localStorage.setItem('cj_apikey',key); }
   updateKeyStatus();
-  toast('✅ API key guardada');
-  document.getElementById('key-status').innerHTML='<span style="color:var(--green)">✅ Key guardada correctamente</span>';
+  toast('✅ Claude API key guardada');
+  document.getElementById('key-status').innerHTML='<span style="color:var(--green)">✅ Guardada correctamente</span>';
 }
 
 async function testApiKey(){
   const input=document.getElementById('apikey-input');
   const key=input.value.trim()||apiKey;
   if(!key){ toast('Ingresa tu API key primero'); return; }
-  const btn=document.querySelector('[id="lbl-ak-test"]');
-  btn.textContent='Probando...'; btn.disabled=true;
+  const btn=document.getElementById('lbl-ak-test');
+  if(btn){ btn.textContent='...'; btn.disabled=true; }
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},
-      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:10,messages:[{role:'user',content:'Hi'}]})
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:5,messages:[{role:'user',content:'Hi'}]})
     });
     if(res.ok){
-      apiKey=key;
-      document.getElementById('key-status').innerHTML='<span style="color:var(--green)">✅ Key válida y funcionando</span>';
-      updateKeyStatus();
-      toast('✅ API key válida');
+      apiKey=key; updateKeyStatus();
+      document.getElementById('key-status').innerHTML='<span style="color:var(--green)">✅ Key válida</span>';
+      toast('✅ Claude API key válida');
     } else {
       const err=await res.json();
-      document.getElementById('key-status').innerHTML='<span style="color:#C62828">❌ Key inválida: '+( err.error?.message||res.status)+'</span>';
+      document.getElementById('key-status').innerHTML='<span style="color:#C62828">❌ '+(err.error?.message||'Key inválida')+'</span>';
       toast('❌ Key inválida');
     }
-  }catch(e){
-    document.getElementById('key-status').innerHTML='<span style="color:#C62828">❌ Error de conexión</span>';
-    toast('❌ Error de conexión');
-  }
-  btn.textContent=t('lbl-ak-test')||'Probar'; btn.disabled=false;
+  }catch(e){ toast('❌ Error de conexión'); }
+  if(btn){ btn.textContent='Probar'; btn.disabled=false; }
 }
 
 function toggleKeyVisibility(){
-  const input=document.getElementById('apikey-input');
-  const btn=document.getElementById('eye-btn');
-  if(input.type==='password'){ input.type='text'; btn.textContent='🙈'; }
-  else{ input.type='password'; btn.textContent='👁️'; }
+  const i=document.getElementById('apikey-input');
+  const b=document.getElementById('eye-btn');
+  i.type=i.type==='password'?'text':'password';
+  b.textContent=i.type==='password'?'👁️':'🙈';
 }
 
-function updateKeyStatus(){
-  const dot=document.getElementById('ai-status-dot');
-  const input=document.getElementById('apikey-input');
-  if(apiKey){
-    if(dot) dot.style.background='#2E7D32';
-    if(input&&!input.value) input.value=apiKey;
-  } else {
-    if(dot) dot.style.background='#ccc';
+// ── GOOGLE KEY ───────────────────────────────────────────────────
+async function saveGoogleKey(){
+  const input=document.getElementById('google-key-input');
+  const key=input.value.trim();
+  if(!key){ toast('Ingresa tu Google API key'); return; }
+  googleKey=key;
+  try{
+    if(!db) await initDB();
+    const tx=db.transaction('cafes','readwrite');
+    tx.objectStore('cafes').put({id:'__googlekey__',key});
+  }catch(e){ localStorage.setItem('cj_googlekey',key); }
+  updateKeyStatus();
+  toast('✅ Google Vision key guardada');
+  document.getElementById('google-key-status').innerHTML='<span style="color:var(--green)">✅ Guardada correctamente</span>';
+}
+
+async function testGoogleKey(){
+  const input=document.getElementById('google-key-input');
+  const key=input.value.trim()||googleKey;
+  if(!key){ toast('Ingresa tu Google API key primero'); return; }
+  try{
+    // Test with a tiny 1x1 white pixel PNG
+    const testImg='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==';
+    const res=await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({requests:[{image:{content:testImg},features:[{type:'TEXT_DETECTION',maxResults:1}]}]})
+    });
+    if(res.ok){
+      googleKey=key; updateKeyStatus();
+      document.getElementById('google-key-status').innerHTML='<span style="color:var(--green)">✅ Key válida</span>';
+      toast('✅ Google Vision key válida');
+    } else {
+      const err=await res.json();
+      document.getElementById('google-key-status').innerHTML='<span style="color:#C62828">❌ '+(err.error?.message||'Key inválida')+'</span>';
+      toast('❌ Key inválida');
+    }
+  }catch(e){ toast('❌ Error de conexión'); }
+}
+
+function toggleGoogleKeyVisibility(){
+  const i=document.getElementById('google-key-input');
+  const b=document.getElementById('eye-google');
+  i.type=i.type==='password'?'text':'password';
+  b.textContent=i.type==='password'?'👁️':'🙈';
+}
+
+// ── UNIFIED AI ANALYZE ───────────────────────────────────────────
+async function doAI(){
+  if(!photoUrl) return;
+  if(aiMode==='manual'){ toast('✏️ Modo manual — rellena los campos'); return; }
+
+  const btn=document.getElementById('aib');
+  document.getElementById('ai-tx').textContent=t('aiA');
+  document.getElementById('ai-ic').innerHTML='<span class="spin"></span>';
+  btn.disabled=true;
+
+  try{
+    if(aiMode==='google'){
+      await analyzeWithGoogle();
+    } else if(aiMode==='claude'){
+      await analyzeWithClaude();
+    }
+  }catch(e){
+    toast('❌ Error al analizar');
+    console.error(e);
   }
+
+  btn.disabled=false;
+  document.getElementById('ai-tx').textContent=t('ai');
+  document.getElementById('ai-ic').textContent='✨';
+}
+
+async function analyzeWithGoogle(){
+  if(!googleKey){
+    toast('⚙️ Configura tu Google Vision key en Ajustes');
+    setTimeout(()=>showSc('settings'),1200);
+    return;
+  }
+  const b64=photoUrl.split(',')[1];
+  const res=await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${googleKey}`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({requests:[{
+      image:{content:b64},
+      features:[
+        {type:'TEXT_DETECTION',maxResults:1},
+        {type:'LABEL_DETECTION',maxResults:10}
+      ]
+    }]})
+  });
+  const data=await res.json();
+  if(!res.ok){ toast('❌ Error Google Vision: '+(data.error?.message||'')); return; }
+
+  const text=data.responses?.[0]?.fullTextAnnotation?.text||'';
+  const labels=(data.responses?.[0]?.labelAnnotations||[]).map(l=>l.description).join(', ');
+
+  if(!text){ toast('No pude leer texto en la imagen'); return; }
+
+  // Parse text with simple heuristics
+  const filled=parseLabelsText(text, labels);
+  showAIResult(filled, `Texto detectado: "${text.substring(0,80)}..."`);
+}
+
+function parseLabelsText(text, labels){
+  const lines=text.split(/[
+,]+/).map(l=>l.trim()).filter(l=>l.length>1);
+  const filled=[];
+  const lower=text.toLowerCase();
+
+  // Country detection
+  const countries=['colombia','ethiopia','kenya','brazil','guatemala','costa rica','panama',
+    'peru','honduras','nicaragua','el salvador','mexico','rwanda','burundi','tanzania',
+    'indonesia','vietnam','yemen','jamaica'];
+  for(const c of countries){
+    if(lower.includes(c)){
+      document.getElementById('f-pai').value=c.charAt(0).toUpperCase()+c.slice(1);
+      filled.push('país');
+      break;
+    }
+  }
+
+  // Process detection
+  const processes={lavado:['washed','lavado'],natural:['natural'],honey:['honey','miel'],
+    anaeróbico:['anaerobic','anaeróbico'],doble:['double ferment']};
+  for(const[proc,keys] of Object.entries(processes)){
+    if(keys.some(k=>lower.includes(k))){
+      document.getElementById('f-pro').value=proc.charAt(0).toUpperCase()+proc.slice(1);
+      filled.push('proceso');
+      break;
+    }
+  }
+
+  // Variety detection
+  const varieties=['geisha','gesha','bourbon','typica','caturra','catuai','sl28','sl34',
+    'heirloom','pacamara','maragogipe','villa sarchi','java'];
+  for(const v of varieties){
+    if(lower.includes(v)){
+      document.getElementById('f-var').value=v.charAt(0).toUpperCase()+v.slice(1);
+      filled.push('variedad');
+      break;
+    }
+  }
+
+  // Altitude
+  const altMatch=text.match(/(\d{3,4})\s*(?:m(?:asl|snm|\.s\.n\.m)?|mts?\.?)/i);
+  if(altMatch){
+    document.getElementById('f-altitud')?document.getElementById('f-altitud').value=altMatch[1]:'';
+    filled.push('altitud');
+  }
+
+  // First long line as name candidate
+  const nameLine=lines.find(l=>l.length>4&&l.length<50&&!/^\d/.test(l));
+  if(nameLine&&!filled.includes('nombre')){
+    document.getElementById('f-nom').value=nameLine;
+    filled.push('nombre');
+  }
+
+  return filled;
+}
+
+async function analyzeWithClaude(){
+  if(!apiKey){
+    toast('⚙️ Configura tu Claude API key en Ajustes');
+    setTimeout(()=>showSc('settings'),1200);
+    return;
+  }
+  const b64=photoUrl.split(',')[1];
+  const mime=(photoUrl.match(/data:([^;]+);/)||[])[1]||'image/jpeg';
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:700,messages:[{role:'user',content:[
+      {type:'image',source:{type:'base64',media_type:mime,data:b64}},
+      {type:'text',text:'Analyze this specialty coffee package label. Extract ONLY clearly visible text. Respond ONLY as JSON no markdown:
+{"nombre":"","tostador":"","pais":"","region":"","variedad":"","proceso":"","altitud":"","notas_cata":"","descripcion_ia":""}'}
+    ]}]})
+  });
+  const data=await res.json();
+  const tx=data.content?.[0]?.text||'';
+  let info={};
+  try{ info=JSON.parse(tx.replace(/```json|```/g,'').trim()); }catch(e){}
+
+  const map={nombre:'f-nom',tostador:'f-tos',pais:'f-pai',region:'f-reg',variedad:'f-var',notas_cata:'f-noe'};
+  const filled=[];
+  Object.entries(map).forEach(([k,id])=>{ if(info[k]){const el=document.getElementById(id);if(el){el.value=info[k];filled.push(k);}} });
+  if(info.proceso){document.getElementById('f-pro').value=info.proceso;filled.push('proceso');}
+  showAIResult(filled, info.descripcion_ia||'');
+}
+
+function showAIResult(filled, extra){
+  const ar=document.getElementById('air');
+  document.getElementById('air-tx').textContent=filled.length
+    ? filled.join(', ')+(extra?' — '+extra:'')
+    : t('nrd');
+  ar.style.display='block';
+  if(filled.length) toast((aiMode==='google'?'👁️':'✨')+' '+filled.length+t('fok'));
 }
 
 function showSettingsIfNoKey(){
-  if(!apiKey){
-    toast('⚙️ Configura tu API key en Ajustes');
-    setTimeout(()=>showSc('settings'),1200);
-    return true;
-  }
+  if(aiMode==='manual') return true; // OK, just manual
+  if(aiMode==='google'&&!googleKey){ toast('⚙️ Configura Google Vision en Ajustes'); setTimeout(()=>showSc('settings'),1000); return true; }
+  if(aiMode==='claude'&&!apiKey){ toast('⚙️ Configura Claude AI en Ajustes'); setTimeout(()=>showSc('settings'),1000); return true; }
   return false;
 }
 
 async function deleteAllData(){
-  if(!confirm('¿Eliminar TODOS tus cafés? Esta acción no se puede deshacer.')) return;
+  if(!confirm('¿Eliminar TODOS tus cafés?')) return;
   try{
     if(!db) await initDB();
     const tx=db.transaction('cafes','readwrite');
     const store=tx.objectStore('cafes');
     const req=store.getAll();
     req.onsuccess=()=>{
-      // Keep only the API key record
-      const toKeep=req.result.filter(r=>r.id==='__apikey__');
+      const toKeep=req.result.filter(r=>['__apikey__','__googlekey__','__aimode__'].includes(r.id));
       store.clear();
       toKeep.forEach(r=>store.put(r));
     };
   }catch(e){ localStorage.removeItem('cj_cafes'); }
-  cafes=[];
-  saveData(); renderHome(); renderStats();
-  toast('🗑 Todos los cafés eliminados');
-  showSc('home');
+  cafes=[]; saveData(); renderHome(); renderStats();
+  toast('🗑 Todos los cafés eliminados'); showSc('home');
 }
 
-// ─── EXPORT CSV ──────────────────────────────────────────────────
+// ─── EXPORT CSV ──────────────────────────────────────────────────// ─── EXPORT CSV ──────────────────────────────────────────────────
 function exportCSV(){
   if(!cafes.length){ toast('No hay cafés para exportar'); return; }
   const headers=[
