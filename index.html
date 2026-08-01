@@ -349,6 +349,76 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;min-height:100vh;m
   </div>
 </div>
 
+<!-- SETTINGS -->
+<div class="screen" id="sc-settings">
+  <div style="margin-bottom:18px">
+    <div style="font-family:'Playfair Display',serif;font-size:19px;color:#222;margin-bottom:2px" id="lbl-cfg-t">Configuración</div>
+    <div style="font-size:12px;color:var(--muted)" id="lbl-cfg-s">API Key · Preferencias</div>
+  </div>
+
+  <!-- API KEY CARD -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="font-size:20px">✨</span>
+      <div>
+        <div style="font-size:13px;font-weight:500;color:#222" id="lbl-ak-t">Análisis con IA</div>
+        <div style="font-size:11px;color:var(--muted)" id="lbl-ak-s">Reconocimiento de etiquetas con Claude AI</div>
+      </div>
+      <span id="ai-status-dot" style="margin-left:auto;width:10px;height:10px;border-radius:50%;background:#ccc;flex-shrink:0"></span>
+    </div>
+
+    <div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:#5D4037;line-height:1.6" id="lbl-ak-info">
+      Para usar el análisis de fotos con IA necesitas una API key de Anthropic.
+      Es gratuita — incluye créditos iniciales para cientos de análisis.<br>
+      <a href="https://console.anthropic.ic.com" target="_blank" style="color:#7B3F00;font-weight:500">→ console.anthropic.com → API Keys → Create Key</a>
+    </div>
+
+    <div class="f" style="margin-bottom:10px">
+      <label id="lbl-ak-l" style="font-size:10px;color:var(--muted);margin-bottom:4px">Tu API Key (sk-ant-...)</label>
+      <div style="position:relative">
+        <input id="apikey-input" type="password" placeholder="sk-ant-api03-..." 
+          style="width:100%;padding:9px 40px 9px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;background:var(--surface)">
+        <button onclick="toggleKeyVisibility()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:0;line-height:1" id="eye-btn">👁️</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button onclick="saveApiKey()" style="flex:1;padding:10px;background:var(--caramel);border:none;border-radius:var(--r);color:#fff;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif" id="lbl-ak-save">Guardar key</button>
+      <button onclick="testApiKey()" style="flex:1;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--caramel);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif" id="lbl-ak-test">Probar</button>
+    </div>
+    <div id="key-status" style="margin-top:8px;font-size:11px;text-align:center;color:var(--muted)"></div>
+  </div>
+
+  <!-- HOW TO GET KEY -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">
+    <div style="font-size:12px;font-weight:500;color:#333;margin-bottom:10px" id="lbl-howto">¿Cómo obtener tu API key? (gratis)</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.8">
+      <div>1️⃣ Ve a <strong style="color:var(--caramel)">console.anthropic.com</strong></div>
+      <div>2️⃣ Crea una cuenta gratuita</div>
+      <div>3️⃣ Ve a <strong>API Keys</strong> → <strong>Create Key</strong></div>
+      <div>4️⃣ Copia la key (empieza con <code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:11px">sk-ant-</code>)</div>
+      <div>5️⃣ Pégala arriba y toca <strong>Guardar key</strong></div>
+    </div>
+    <div style="margin-top:10px;padding:8px 10px;background:#E8F5E9;border-radius:8px;font-size:11px;color:#2E7D32">
+      💚 Anthropic da ~$5 en créditos gratis. Cada análisis de foto cuesta ~$0.003 — suficiente para <strong>+1.500 análisis</strong>.
+    </div>
+  </div>
+
+  <!-- PRIVACY NOTE -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">
+    <div style="font-size:12px;font-weight:500;color:#333;margin-bottom:6px">🔒 Privacidad</div>
+    <div style="font-size:11px;color:var(--muted);line-height:1.7">
+      Tu API key se guarda <strong>solo en tu dispositivo</strong> (IndexedDB local). Nunca se envía a ningún servidor nuestro. Las fotos se envían directamente a la API de Anthropic solo cuando tocas "Analizar con IA".
+    </div>
+  </div>
+
+  <!-- DANGER ZONE -->
+  <div style="background:var(--surface);border:1px solid #FFCDD2;border-radius:14px;padding:14px;margin-bottom:14px">
+    <div style="font-size:12px;font-weight:500;color:#C62828;margin-bottom:10px" id="lbl-danger">Zona de riesgo</div>
+    <button onclick="deleteAllData()" style="width:100%;padding:10px;border:1px solid #FFCDD2;border-radius:var(--r);background:#FFF5F5;color:#C62828;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">🗑 Eliminar todos mis cafés</button>
+  </div>
+</div>
+
 <!-- PREP MODAL -->
 <div class="modal-overlay" id="prep-modal" style="display:none" onclick="if(event.target===this)closePrepModal()">
   <div class="modal">
@@ -388,6 +458,7 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;min-height:100vh;m
   <button class="nb active" id="nb-home" onclick="showSc('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span id="nbl-h">Inicio</span></button>
   <button class="nb" id="nb-register" onclick="newCafe()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg><span id="nbl-n">Nuevo</span></button>
   <button class="nb" id="nb-stats" onclick="showSc('stats')"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span id="nbl-s">Stats</span></button>
+  <button class="nb" id="nb-settings" onclick="showSc('settings')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span id="nbl-cfg">Config</span></button>
 </div>
 <!-- INSTALL BANNER -->
 <div id="install-banner" style="display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#1a0800;color:#D4A843;padding:10px 14px;z-index:200;align-items:center;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,.4)">
@@ -401,9 +472,9 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;min-height:100vh;m
 <script>
 // ═══════════════════════════════ i18n ════════════════════════════
 const T={
-  es:{brand:'Diario de Café',sub:' cafés',search:'Buscar por nombre, origen...',all:'Todos',q:'Rápido',e:'Expert',stLink:'Ver estadísticas →',hc:'Mis cafés',em:'Registra tu primer café tocando +',bk:'Volver',nw:'Nuevo café',ed:'Editar café',mq:'Registro Rápido',me:'Coffee Expert',ph:'Agregar foto del paquete',cam:'Tomar foto',gal:'Galería',chg:'Cambiar foto',del:'Eliminar foto',ai:'Analizar con IA — rellenar campos',aiA:'Analizando...',aif:'✨ La IA encontró',pkg:'El paquete',nm:'Nombre del café',ts:'Tostador',pr:'Precio (€)',gr:'Gramos',lu:'Lugar de compra',ori:'Origen',pa:'País',re:'Región / Finca',va:'Variedad',pc:'Proceso',mets:'Método / Cafetera',met:'Método principal',noq:'Notas personales',prepsT:'Preparaciones',addPrep:'Añadir preparación',scaG:'Puntuación SCA promedio',descS:'Descriptores sensoriales',dc:'Cuerpo',da:'Acidez',dn:'Notas aromáticas',noe:'Notas de cata',rb:'¿Lo comprarías de nuevo?',save:'Guardar café ☕',navH:'Inicio',navN:'Nuevo',navS:'Stats',stT:'Estadísticas',stS:'Tu colección',tot:'Total cafés',avg:'Promedio SCA',best:'Mejor SCA',cnt:'Países',top:'Top cafés por SCA',del2:'🗑 Eliminar',edit:'✏️ Editar',deld:'Café eliminado',saved:'Café guardado ✓',upd:'Café actualizado ✓',nn:'Agrega el nombre del café',fok:' campos completados',nrd:'No pude leer la etiqueta. Prueba mejor foto.',pmT:'Añadir preparación',pmMet:'Método / Cafetera',pmR:'Ratio',pmTp:'Temp. (°C)',pmEx:'Extracción (seg)',pmAl:'Altitud (msnm)',pmSca:'Perfil SCA',pmAr:'Aroma',pmSa:'Sabor',pmAc:'Acidez',pmCu:'Cuerpo',pmNo:'Notas de esta preparación',pmSave:'Guardar preparación',method:'Método',ratio:'Ratio',temp:'Temp.',altitude:'Altitud',scaProfile:'Perfil SCA',cupping:'Notas de cata',misc:'Notas',place:'Lugar',preps:'preparaciones',removedPrep:'Preparación eliminada',},
-  en:{brand:'Coffee Journal',sub:' coffees',search:'Search by name, origin...',all:'All',q:'Quick',e:'Expert',stLink:'Statistics →',hc:'My coffees',em:'Add your first coffee by tapping +',bk:'Back',nw:'New coffee',ed:'Edit coffee',mq:'Quick Entry',me:'Coffee Expert',ph:'Add package photo',cam:'Take photo',gal:'Gallery',chg:'Change photo',del:'Remove photo',ai:'Analyze with AI — fill fields',aiA:'Analyzing...',aif:'✨ AI found',pkg:'The package',nm:'Coffee name',ts:'Roaster',pr:'Price (€)',gr:'Grams',lu:'Place of purchase',ori:'Origin',pa:'Country',re:'Region / Farm',va:'Variety',pc:'Process',mets:'Method / Brewer',met:'Main method',noq:'Personal notes',prepsT:'Preparations',addPrep:'Add preparation',scaG:'Average SCA score',descS:'Sensory descriptors',dc:'Body',da:'Acidity',dn:'Aroma notes',noe:'Cupping notes',rb:'Would you buy it again?',save:'Save coffee ☕',navH:'Home',navN:'New',navS:'Stats',stT:'Statistics',stS:'Your collection',tot:'Total coffees',avg:'Avg SCA',best:'Best SCA',cnt:'Countries',top:'Top coffees by SCA',del2:'🗑 Delete',edit:'✏️ Edit',deld:'Coffee deleted',saved:'Coffee saved ✓',upd:'Coffee updated ✓',nn:'Add the coffee name',fok:' fields filled',nrd:'Could not read label. Try a clearer photo.',pmT:'Add preparation',pmMet:'Method / Brewer',pmR:'Ratio',pmTp:'Temp (°C)',pmEx:'Extraction (sec)',pmAl:'Altitude (masl)',pmSca:'SCA Profile',pmAr:'Aroma',pmSa:'Flavor',pmAc:'Acidity',pmCu:'Body',pmNo:'Notes for this preparation',pmSave:'Save preparation',method:'Method',ratio:'Ratio',temp:'Temp',altitude:'Altitude',scaProfile:'SCA Profile',cupping:'Cupping notes',misc:'Notes',place:'Place',preps:'preparations',removedPrep:'Preparation removed',},
-  de:{brand:'Kaffeetagebuch',sub:' Kaffees',search:'Nach Name, Herkunft suchen...',all:'Alle',q:'Schnell',e:'Experte',stLink:'Statistiken →',hc:'Meine Kaffees',em:'Ersten Kaffee mit + hinzufügen',bk:'Zurück',nw:'Neuer Kaffee',ed:'Kaffee bearbeiten',mq:'Schnelleingabe',me:'Kaffee-Experte',ph:'Packungsfoto hinzufügen',cam:'Foto aufnehmen',gal:'Galerie',chg:'Foto ändern',del:'Foto entfernen',ai:'Mit KI analysieren — Felder ausfüllen',aiA:'Analysiere...',aif:'✨ KI hat gefunden',pkg:'Die Packung',nm:'Kaffeename',ts:'Rösterei',pr:'Preis (€)',gr:'Gramm',lu:'Kaufort',ori:'Herkunft',pa:'Land',re:'Region / Farm',va:'Sorte',pc:'Aufbereitung',mets:'Methode / Kaffeemaschine',met:'Hauptmethode',noq:'Persönliche Notizen',prepsT:'Zubereitungen',addPrep:'Zubereitung hinzufügen',scaG:'Ø SCA-Bewertung',descS:'Sensorische Deskriptoren',dc:'Körper',da:'Säure',dn:'Aromanotenoten',noe:'Verkostungsnotizen',rb:'Würdest du ihn wieder kaufen?',save:'Kaffee speichern ☕',navH:'Start',navN:'Neu',navS:'Stats',stT:'Statistiken',stS:'Deine Sammlung',tot:'Kaffees gesamt',avg:'Ø SCA',best:'Bester SCA',cnt:'Länder',top:'Top-Kaffees nach SCA',del2:'🗑 Löschen',edit:'✏️ Bearbeiten',deld:'Kaffee gelöscht',saved:'Kaffee gespeichert ✓',upd:'Kaffee aktualisiert ✓',nn:'Kaffeename eingeben',fok:' Felder ausgefüllt',nrd:'Etikett nicht lesbar. Besseres Foto versuchen.',pmT:'Zubereitung hinzufügen',pmMet:'Methode / Kaffeemaschine',pmR:'Verhältnis',pmTp:'Temp. (°C)',pmEx:'Extraktion (Sek.)',pmAl:'Höhe (m.ü.M.)',pmSca:'SCA-Profil',pmAr:'Aroma',pmSa:'Geschmack',pmAc:'Säure',pmCu:'Körper',pmNo:'Notizen zu dieser Zubereitung',pmSave:'Zubereitung speichern',method:'Methode',ratio:'Verhältnis',temp:'Temperatur',altitude:'Höhe',scaProfile:'SCA-Profil',cupping:'Verkostungsnotizen',misc:'Notizen',place:'Ort',preps:'Zubereitungen',removedPrep:'Zubereitung entfernt',}
+  es:{brand:'Diario de Café',sub:' cafés',search:'Buscar por nombre, origen...',all:'Todos',q:'Rápido',e:'Expert',stLink:'Ver estadísticas →',hc:'Mis cafés',em:'Registra tu primer café tocando +',bk:'Volver',nw:'Nuevo café',ed:'Editar café',mq:'Registro Rápido',me:'Coffee Expert',ph:'Agregar foto del paquete',cam:'Tomar foto',gal:'Galería',chg:'Cambiar foto',del:'Eliminar foto',ai:'Analizar con IA — rellenar campos',aiA:'Analizando...',aif:'✨ La IA encontró',pkg:'El paquete',nm:'Nombre del café',ts:'Tostador',pr:'Precio (€)',gr:'Gramos',lu:'Lugar de compra',ori:'Origen',pa:'País',re:'Región / Finca',va:'Variedad',pc:'Proceso',mets:'Método / Cafetera',met:'Método principal',noq:'Notas personales',prepsT:'Preparaciones',addPrep:'Añadir preparación',scaG:'Puntuación SCA promedio',descS:'Descriptores sensoriales',dc:'Cuerpo',da:'Acidez',dn:'Notas aromáticas',noe:'Notas de cata',rb:'¿Lo comprarías de nuevo?',save:'Guardar café ☕',navH:'Inicio',navN:'Nuevo',navS:'Stats',stT:'Estadísticas',stS:'Tu colección',tot:'Total cafés',avg:'Promedio SCA',best:'Mejor SCA',cnt:'Países',top:'Top cafés por SCA',del2:'🗑 Eliminar',edit:'✏️ Editar',deld:'Café eliminado',saved:'Café guardado ✓',upd:'Café actualizado ✓',nn:'Agrega el nombre del café',fok:' campos completados',nrd:'No pude leer la etiqueta. Prueba mejor foto.',pmT:'Añadir preparación',pmMet:'Método / Cafetera',pmR:'Ratio',pmTp:'Temp. (°C)',pmEx:'Extracción (seg)',pmAl:'Altitud (msnm)',pmSca:'Perfil SCA',pmAr:'Aroma',pmSa:'Sabor',pmAc:'Acidez',pmCu:'Cuerpo',pmNo:'Notas de esta preparación',pmSave:'Guardar preparación',method:'Método',ratio:'Ratio',temp:'Temp.',altitude:'Altitud',scaProfile:'Perfil SCA',cupping:'Notas de cata',misc:'Notas',place:'Lugar',preps:'preparaciones',removedPrep:'Preparación eliminada',cfgT:'Configuración',cfgS:'API Key · Preferencias',navCfg:'Ajustes',},
+  en:{brand:'Coffee Journal',sub:' coffees',search:'Search by name, origin...',all:'All',q:'Quick',e:'Expert',stLink:'Statistics →',hc:'My coffees',em:'Add your first coffee by tapping +',bk:'Back',nw:'New coffee',ed:'Edit coffee',mq:'Quick Entry',me:'Coffee Expert',ph:'Add package photo',cam:'Take photo',gal:'Gallery',chg:'Change photo',del:'Remove photo',ai:'Analyze with AI — fill fields',aiA:'Analyzing...',aif:'✨ AI found',pkg:'The package',nm:'Coffee name',ts:'Roaster',pr:'Price (€)',gr:'Grams',lu:'Place of purchase',ori:'Origin',pa:'Country',re:'Region / Farm',va:'Variety',pc:'Process',mets:'Method / Brewer',met:'Main method',noq:'Personal notes',prepsT:'Preparations',addPrep:'Add preparation',scaG:'Average SCA score',descS:'Sensory descriptors',dc:'Body',da:'Acidity',dn:'Aroma notes',noe:'Cupping notes',rb:'Would you buy it again?',save:'Save coffee ☕',navH:'Home',navN:'New',navS:'Stats',stT:'Statistics',stS:'Your collection',tot:'Total coffees',avg:'Avg SCA',best:'Best SCA',cnt:'Countries',top:'Top coffees by SCA',del2:'🗑 Delete',edit:'✏️ Edit',deld:'Coffee deleted',saved:'Coffee saved ✓',upd:'Coffee updated ✓',nn:'Add the coffee name',fok:' fields filled',nrd:'Could not read label. Try a clearer photo.',pmT:'Add preparation',pmMet:'Method / Brewer',pmR:'Ratio',pmTp:'Temp (°C)',pmEx:'Extraction (sec)',pmAl:'Altitude (masl)',pmSca:'SCA Profile',pmAr:'Aroma',pmSa:'Flavor',pmAc:'Acidity',pmCu:'Body',pmNo:'Notes for this preparation',pmSave:'Save preparation',method:'Method',ratio:'Ratio',temp:'Temp',altitude:'Altitude',scaProfile:'SCA Profile',cupping:'Cupping notes',misc:'Notes',place:'Place',preps:'preparations',removedPrep:'Preparation removed',cfgT:'Settings',cfgS:'API Key · Preferences',navCfg:'Settings',},
+  de:{brand:'Kaffeetagebuch',sub:' Kaffees',search:'Nach Name, Herkunft suchen...',all:'Alle',q:'Schnell',e:'Experte',stLink:'Statistiken →',hc:'Meine Kaffees',em:'Ersten Kaffee mit + hinzufügen',bk:'Zurück',nw:'Neuer Kaffee',ed:'Kaffee bearbeiten',mq:'Schnelleingabe',me:'Kaffee-Experte',ph:'Packungsfoto hinzufügen',cam:'Foto aufnehmen',gal:'Galerie',chg:'Foto ändern',del:'Foto entfernen',ai:'Mit KI analysieren — Felder ausfüllen',aiA:'Analysiere...',aif:'✨ KI hat gefunden',pkg:'Die Packung',nm:'Kaffeename',ts:'Rösterei',pr:'Preis (€)',gr:'Gramm',lu:'Kaufort',ori:'Herkunft',pa:'Land',re:'Region / Farm',va:'Sorte',pc:'Aufbereitung',mets:'Methode / Kaffeemaschine',met:'Hauptmethode',noq:'Persönliche Notizen',prepsT:'Zubereitungen',addPrep:'Zubereitung hinzufügen',scaG:'Ø SCA-Bewertung',descS:'Sensorische Deskriptoren',dc:'Körper',da:'Säure',dn:'Aromanotenoten',noe:'Verkostungsnotizen',rb:'Würdest du ihn wieder kaufen?',save:'Kaffee speichern ☕',navH:'Start',navN:'Neu',navS:'Stats',stT:'Statistiken',stS:'Deine Sammlung',tot:'Kaffees gesamt',avg:'Ø SCA',best:'Bester SCA',cnt:'Länder',top:'Top-Kaffees nach SCA',del2:'🗑 Löschen',edit:'✏️ Bearbeiten',deld:'Kaffee gelöscht',saved:'Kaffee gespeichert ✓',upd:'Kaffee aktualisiert ✓',nn:'Kaffeename eingeben',fok:' Felder ausgefüllt',nrd:'Etikett nicht lesbar. Besseres Foto versuchen.',pmT:'Zubereitung hinzufügen',pmMet:'Methode / Kaffeemaschine',pmR:'Verhältnis',pmTp:'Temp. (°C)',pmEx:'Extraktion (Sek.)',pmAl:'Höhe (m.ü.M.)',pmSca:'SCA-Profil',pmAr:'Aroma',pmSa:'Geschmack',pmAc:'Säure',pmCu:'Körper',pmNo:'Notizen zu dieser Zubereitung',pmSave:'Zubereitung speichern',method:'Methode',ratio:'Verhältnis',temp:'Temperatur',altitude:'Höhe',scaProfile:'SCA-Profil',cupping:'Verkostungsnotizen',misc:'Notizen',place:'Ort',preps:'Zubereitungen',removedPrep:'Zubereitung entfernt',cfgT:'Einstellungen',cfgS:'API Key · Einstellungen',navCfg:'Einst.',}
 };
 
 let lang='es', cafes=[], filter='all', editId=null, photoUrl=null, mode='quick', rebuy=null, preps=[], editPrepIdx=null;
@@ -439,6 +510,7 @@ function applyLang(){
     'lbl-pm-sca':t('pmSca'),'lbl-pm-ar':t('pmAr'),'lbl-pm-sa':t('pmSa'),
     'lbl-pm-ac':t('pmAc'),'lbl-pm-cu':t('pmCu'),'lbl-pm-no':t('pmNo'),
     'lbl-pm-save':t('pmSave'),
+    'lbl-cfg-t':t('cfgT'),'lbl-cfg-s':t('cfgS'),'nbl-cfg':t('navCfg'),
   };
   Object.entries(m).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.textContent=val;});
   const si=document.getElementById('search'); if(si) si.placeholder=t('search');
@@ -469,7 +541,7 @@ async function loadData(){
   }catch(e){
     // fallback localStorage
     try{cafes=JSON.parse(localStorage.getItem('cj_cafes')||'[]');}catch(e2){cafes=[];}
-    renderHome(); renderStats(); applyLang();
+    renderHome(); renderStats(); applyLang(); loadApiKey(); loadApiKey();
   }
 }
 async function saveData(){
@@ -882,6 +954,117 @@ function installApp(){
 function dismissBanner(){
   const banner=document.getElementById('install-banner');
   if(banner) banner.style.display='none';
+}
+
+// ─── API KEY MANAGEMENT ──────────────────────────────────────────
+let apiKey = null;
+
+async function loadApiKey(){
+  try{
+    if(!db) await initDB();
+    const tx=db.transaction('cafes','readonly');
+    const req=tx.objectStore('cafes').get('__apikey__');
+    req.onsuccess=()=>{
+      if(req.result){ apiKey=req.result.key; updateKeyStatus(); }
+    };
+  }catch(e){
+    // fallback localStorage
+    apiKey=localStorage.getItem('cj_apikey')||null;
+    updateKeyStatus();
+  }
+}
+
+async function saveApiKey(){
+  const input=document.getElementById('apikey-input');
+  const key=input.value.trim();
+  if(!key){ toast('Ingresa tu API key'); return; }
+  if(!key.startsWith('sk-ant-')){ toast('❌ La key debe empezar con sk-ant-'); return; }
+  apiKey=key;
+  // Save to IndexedDB
+  try{
+    if(!db) await initDB();
+    const tx=db.transaction('cafes','readwrite');
+    tx.objectStore('cafes').put({id:'__apikey__',key});
+  }catch(e){ localStorage.setItem('cj_apikey',key); }
+  updateKeyStatus();
+  toast('✅ API key guardada');
+  document.getElementById('key-status').innerHTML='<span style="color:var(--green)">✅ Key guardada correctamente</span>';
+}
+
+async function testApiKey(){
+  const input=document.getElementById('apikey-input');
+  const key=input.value.trim()||apiKey;
+  if(!key){ toast('Ingresa tu API key primero'); return; }
+  const btn=document.querySelector('[id="lbl-ak-test"]');
+  btn.textContent='Probando...'; btn.disabled=true;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:10,messages:[{role:'user',content:'Hi'}]})
+    });
+    if(res.ok){
+      apiKey=key;
+      document.getElementById('key-status').innerHTML='<span style="color:var(--green)">✅ Key válida y funcionando</span>';
+      updateKeyStatus();
+      toast('✅ API key válida');
+    } else {
+      const err=await res.json();
+      document.getElementById('key-status').innerHTML='<span style="color:#C62828">❌ Key inválida: '+( err.error?.message||res.status)+'</span>';
+      toast('❌ Key inválida');
+    }
+  }catch(e){
+    document.getElementById('key-status').innerHTML='<span style="color:#C62828">❌ Error de conexión</span>';
+    toast('❌ Error de conexión');
+  }
+  btn.textContent=t('lbl-ak-test')||'Probar'; btn.disabled=false;
+}
+
+function toggleKeyVisibility(){
+  const input=document.getElementById('apikey-input');
+  const btn=document.getElementById('eye-btn');
+  if(input.type==='password'){ input.type='text'; btn.textContent='🙈'; }
+  else{ input.type='password'; btn.textContent='👁️'; }
+}
+
+function updateKeyStatus(){
+  const dot=document.getElementById('ai-status-dot');
+  const input=document.getElementById('apikey-input');
+  if(apiKey){
+    if(dot) dot.style.background='#2E7D32';
+    if(input&&!input.value) input.value=apiKey;
+  } else {
+    if(dot) dot.style.background='#ccc';
+  }
+}
+
+function showSettingsIfNoKey(){
+  if(!apiKey){
+    toast('⚙️ Configura tu API key en Ajustes');
+    setTimeout(()=>showSc('settings'),1200);
+    return true;
+  }
+  return false;
+}
+
+async function deleteAllData(){
+  if(!confirm('¿Eliminar TODOS tus cafés? Esta acción no se puede deshacer.')) return;
+  try{
+    if(!db) await initDB();
+    const tx=db.transaction('cafes','readwrite');
+    const store=tx.objectStore('cafes');
+    const req=store.getAll();
+    req.onsuccess=()=>{
+      // Keep only the API key record
+      const toKeep=req.result.filter(r=>r.id==='__apikey__');
+      store.clear();
+      toKeep.forEach(r=>store.put(r));
+    };
+  }catch(e){ localStorage.removeItem('cj_cafes'); }
+  cafes=[];
+  saveData(); renderHome(); renderStats();
+  toast('🗑 Todos los cafés eliminados');
+  showSc('home');
 }
 
 // ─── EXPORT CSV ──────────────────────────────────────────────────
