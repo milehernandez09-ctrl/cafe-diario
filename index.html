@@ -606,7 +606,27 @@ async function saveSingleCafe(cafe){
     if(!db) await initDB();
     const tx=db.transaction('cafes','readwrite');
     tx.objectStore('cafes').put(cafe);
-  }catch(e){ await saveData(); }
+    tx.onerror=async()=>{
+      // If failed with photo, try without photo
+      if(cafe.foto){
+        const slim={...cafe,foto:null};
+        const tx2=db.transaction('cafes','readwrite');
+        tx2.objectStore('cafes').put(slim);
+        cafes=cafes.map(c=>c.id===cafe.id?slim:c);
+        toast('⚠️ Café guardado sin foto (espacio insuficiente)');
+      }
+    };
+  }catch(e){
+    // Try without photo
+    try{
+      if(!db) await initDB();
+      const slim={...cafe,foto:null};
+      const tx=db.transaction('cafes','readwrite');
+      tx.objectStore('cafes').put(slim);
+      cafes=cafes.map(c=>c.id===cafe.id?slim:c);
+      toast('⚠️ Café guardado sin foto (espacio insuficiente)');
+    }catch(e2){ toast('❌ Error guardando. Intenta liberar espacio en Stats.'); }
+  }
 }
 
 async function deleteSingleCafe(id){
@@ -769,12 +789,20 @@ function handlePhoto(e){
   r.onload=ev=>{
     const img=new Image();
     img.onload=()=>{
-      const MAX=380, q=0.5;
+      // Compress aggressively for storage: max 300px, quality 0.4
+      const MAX=300, q=0.4;
       const ratio=Math.min(1,MAX/Math.max(img.width,img.height));
       const w=Math.round(img.width*ratio), h=Math.round(img.height*ratio);
       const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
       cv.getContext('2d').drawImage(img,0,0,w,h);
       photoUrl=cv.toDataURL('image/jpeg',q);
+      // If still too big (>80KB), compress more
+      if(photoUrl.length > 109226){ // ~80KB in base64
+        const cv2=document.createElement('canvas');
+        cv2.width=Math.round(w*0.7); cv2.height=Math.round(h*0.7);
+        cv2.getContext('2d').drawImage(img,0,0,cv2.width,cv2.height);
+        photoUrl=cv2.toDataURL('image/jpeg',0.35);
+      }
       updatePhotoZone();
       document.getElementById('aib').disabled=false;
       const kb=Math.round(photoUrl.length*0.75/1024);
@@ -888,9 +916,13 @@ function saveCafe(){
   };
   const isEdit=!!editId;
   if(isEdit) cafes=cafes.map(c=>c.id===editId?cafe:c); else cafes.unshift(cafe);
-  saveSingleCafe(cafe);
   document.getElementById('tb-sub').textContent=cafes.length+t('sub');
-  editId=null; toast(isEdit?t('upd'):t('saved')); showSc('home');
+  editId=null;
+  // Save and navigate - show success immediately
+  toast(isEdit?t('upd'):t('saved'));
+  showSc('home');
+  // Save in background
+  saveSingleCafe(cafe);
 }
 
 // ─── RESET ───────────────────────────────────────────────────────
