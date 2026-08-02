@@ -559,8 +559,19 @@ function applyLang(){
 let db=null;
 function initDB(){
   return new Promise((res,rej)=>{
-    const req=indexedDB.open('CafeDiario',1);
-    req.onupgradeneeded=e=>{ const d=e.target.result; if(!d.objectStoreNames.contains('cafes')) d.createObjectStore('cafes',{keyPath:'id'}); };
+    const req=indexedDB.open('CafeDiario',2); // v2: separate stores
+    req.onupgradeneeded=e=>{
+      const d=e.target.result;
+      // Cafes store - data only, no photos
+      if(!d.objectStoreNames.contains('cafes'))
+        d.createObjectStore('cafes',{keyPath:'id'});
+      // Config store - API keys, settings
+      if(!d.objectStoreNames.contains('config'))
+        d.createObjectStore('config',{keyPath:'key'});
+      // Photos store - base64 images, keyed by cafe id
+      if(!d.objectStoreNames.contains('photos'))
+        d.createObjectStore('photos',{keyPath:'id'});
+    };
     req.onsuccess=e=>{ db=e.target.result; res(db); };
     req.onerror=()=>rej(req.error);
   });
@@ -568,15 +579,26 @@ function initDB(){
 async function loadData(){
   try{
     await initDB();
+    // Load cafe data
     const tx=db.transaction('cafes','readonly');
-    const store=tx.objectStore('cafes');
-    const req=store.getAll();
-    req.onsuccess=()=>{
-      cafes=req.result.sort((a,b)=>b.id-a.id);
-      renderHome(); renderStats(); applyLang(); loadApiKey();
+    const req=tx.objectStore('cafes').getAll();
+    req.onsuccess=async()=>{
+      cafes=req.result.filter(c=>!c.key&&!c.mode||c.mode).sort((a,b)=>b.id-a.id);
+      // Load photos and attach to cafes
+      try{
+        const ptx=db.transaction('photos','readonly');
+        const preq=ptx.objectStore('photos').getAll();
+        preq.onsuccess=()=>{
+          const photoMap={};
+          preq.result.forEach(p=>photoMap[p.id]=p.foto);
+          cafes=cafes.map(c=>({...c,foto:photoMap[c.id]||null}));
+          renderHome(); renderStats(); applyLang(); loadApiKey();
+        };
+        preq.onerror=()=>{ renderHome(); renderStats(); applyLang(); loadApiKey(); };
+      }catch(pe){ renderHome(); renderStats(); applyLang(); loadApiKey(); }
     };
+    req.onerror=()=>{ cafes=[]; renderHome(); renderStats(); applyLang(); loadApiKey(); };
   }catch(e){
-    // fallback localStorage
     try{cafes=JSON.parse(localStorage.getItem('cj_cafes')||'[]');}catch(e2){cafes=[];}
     renderHome(); renderStats(); applyLang(); loadApiKey();
   }
@@ -587,46 +609,49 @@ async function saveData(){
     if(!db) await initDB();
     const tx=db.transaction('cafes','readwrite');
     const store=tx.objectStore('cafes');
-    // Clear and re-add all (simplest approach for small collections)
+    // Save cafe data WITHOUT photos (photos stored separately)
     store.clear();
-    cafes.forEach(c=>store.put(c));
-    tx.oncomplete=()=>{}; // success silent
-    tx.onerror=()=>toast('❌ Error guardando en IndexedDB');
+    cafes.forEach(c=>{
+      const slim={...c,foto:null}; // never store photo in cafe record
+      store.put(slim);
+    });
   }catch(e){
-    // fallback localStorage with compression
     try{
-      const slim=cafes.map(c=>({...c,foto:c.foto?c.foto.substring(0,c.foto.length):null}));
+      const slim=cafes.map(c=>({...c,foto:null}));
       localStorage.setItem('cj_cafes',JSON.stringify(slim));
-    }catch(e2){ toast('❌ Sin espacio. Libera fotos en Stats.'); }
+    }catch(e2){ toast('❌ Sin espacio. Ve a Stats → Liberar fotos.'); }
   }
 }
 
 async function saveSingleCafe(cafe){
-  try{
-    if(!db) await initDB();
-    const tx=db.transaction('cafes','readwrite');
-    tx.objectStore('cafes').put(cafe);
-    tx.onerror=async()=>{
-      // If failed with photo, try without photo
-      if(cafe.foto){
-        const slim={...cafe,foto:null};
-        const tx2=db.transaction('cafes','readwrite');
-        tx2.objectStore('cafes').put(slim);
-        cafes=cafes.map(c=>c.id===cafe.id?slim:c);
-        toast('⚠️ Café guardado sin foto (espacio insuficiente)');
-      }
-    };
-  }catch(e){
-    // Try without photo
+  // Try with photo first
+  const saved = await tryPut(cafe);
+  if(saved) return;
+  // If failed, try without photo
+  if(cafe.foto){
+    const slim={...cafe,foto:null};
+    const saved2 = await tryPut(slim);
+    if(saved2){
+      cafes=cafes.map(c=>c.id===cafe.id?slim:c);
+      renderHome();
+      toast('⚠️ Guardado sin foto — espacio insuficiente');
+      return;
+    }
+  }
+  toast('❌ No se pudo guardar. Ve a Stats → Liberar fotos.');
+}
+
+function tryPut(obj){
+  return new Promise(async(resolve)=>{
     try{
       if(!db) await initDB();
-      const slim={...cafe,foto:null};
       const tx=db.transaction('cafes','readwrite');
-      tx.objectStore('cafes').put(slim);
-      cafes=cafes.map(c=>c.id===cafe.id?slim:c);
-      toast('⚠️ Café guardado sin foto (espacio insuficiente)');
-    }catch(e2){ toast('❌ Error guardando. Intenta liberar espacio en Stats.'); }
-  }
+      const req=tx.objectStore('cafes').put(obj);
+      tx.oncomplete=()=>resolve(true);
+      tx.onerror=()=>resolve(false);
+      tx.onabort=()=>resolve(false);
+    }catch(e){ resolve(false); }
+  });
 }
 
 async function deleteSingleCafe(id){
@@ -634,7 +659,8 @@ async function deleteSingleCafe(id){
     if(!db) await initDB();
     const tx=db.transaction('cafes','readwrite');
     tx.objectStore('cafes').delete(id);
-  }catch(e){ await saveData(); }
+    tx.onerror=()=>{}; // silent
+  }catch(e){}
 }
 
 // ─── SCREENS ─────────────────────────────────────────────────────
@@ -941,10 +967,15 @@ function resetForm(full=true){
 // ─── TOAST ───────────────────────────────────────────────────────
 function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2800); }
 
-function clearPhotos(){
+async function clearPhotos(){
   if(!confirm('¿Eliminar todas las fotos para liberar espacio? Los datos del café se conservan.')) return;
   cafes=cafes.map(c=>({...c,foto:null}));
   photoUrl=null;
+  try{
+    if(!db) await initDB();
+    const tx=db.transaction('photos','readwrite');
+    tx.objectStore('photos').clear();
+  }catch(e){}
   saveData(); renderStats();
   toast('🗑 Fotos eliminadas. Espacio liberado.');
 }
@@ -1009,26 +1040,22 @@ let apiKey=null, googleKey=null, aiMode='manual';
 async function loadApiKey(){
   try{
     if(!db) await initDB();
-    const tx=db.transaction('cafes','readonly');
-    const store=tx.objectStore('cafes');
-    // Load Claude key
-    const r1=store.get('__apikey__');
-    r1.onsuccess=()=>{ if(r1.result){ apiKey=r1.result.key; } };
-    // Load Google key
-    const r2=store.get('__googlekey__');
-    r2.onsuccess=()=>{ if(r2.result){ googleKey=r2.result.key; } };
-    // Load mode
-    const r3=store.get('__aimode__');
+    const tx=db.transaction('config','readonly');
+    const store=tx.objectStore('config');
+    const r1=store.get('apikey');
+    r1.onsuccess=()=>{ if(r1.result) apiKey=r1.result.value; };
+    const r2=store.get('googlekey');
+    r2.onsuccess=()=>{ if(r2.result) googleKey=r2.result.value; };
+    const r3=store.get('aimode');
     r3.onsuccess=()=>{
-      if(r3.result) aiMode=r3.result.mode;
-      updateKeyStatus();
-      updateModeUI();
-      // Pre-fill inputs
+      if(r3.result) aiMode=r3.result.value||'manual';
+      updateKeyStatus(); updateModeUI();
       setTimeout(()=>{
         const ai=document.getElementById('apikey-input'); if(ai&&apiKey) ai.value=apiKey;
         const gi=document.getElementById('google-key-input'); if(gi&&googleKey) gi.value=googleKey;
       },300);
     };
+    r3.onerror=()=>{ updateKeyStatus(); updateModeUI(); };
   }catch(e){
     apiKey=localStorage.getItem('cj_apikey')||null;
     googleKey=localStorage.getItem('cj_googlekey')||null;
@@ -1040,8 +1067,8 @@ async function loadApiKey(){
 async function saveMode(m){
   try{
     if(!db) await initDB();
-    const tx=db.transaction('cafes','readwrite');
-    tx.objectStore('cafes').put({id:'__aimode__',mode:m});
+    const tx=db.transaction('config','readwrite');
+    tx.objectStore('config').put({key:'aimode',value:m});
   }catch(e){ localStorage.setItem('cj_aimode',m); }
 }
 
@@ -1086,8 +1113,10 @@ async function saveApiKey(){
   apiKey=key;
   try{
     if(!db) await initDB();
-    const tx=db.transaction('cafes','readwrite');
-    tx.objectStore('cafes').put({id:'__apikey__',key});
+    const tx=db.transaction('config','readwrite');
+    tx.objectStore('config').put({key:'apikey',value:key});
+    // Also save aimode as claude
+    tx.objectStore('config').put({key:'aimode',value:'claude'});
   }catch(e){ localStorage.setItem('cj_apikey',key); }
   updateKeyStatus();
   toast('✅ Claude API key guardada');
@@ -1139,8 +1168,8 @@ async function saveGoogleKey(){
   googleKey=key;
   try{
     if(!db) await initDB();
-    const tx=db.transaction('cafes','readwrite');
-    tx.objectStore('cafes').put({id:'__googlekey__',key});
+    const tx=db.transaction('config','readwrite');
+    tx.objectStore('config').put({key:'googlekey',value:key});
   }catch(e){ localStorage.setItem('cj_googlekey',key); }
   updateKeyStatus();
   toast('✅ Google Vision key guardada');
