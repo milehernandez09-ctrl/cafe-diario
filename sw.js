@@ -1,4 +1,4 @@
-const CACHE = 'cafe-diario-v8';
+const CACHE = 'cafe-diario-v9';
 const ASSETS = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
