@@ -1069,11 +1069,14 @@ async function testApiKey(){
   const btn=document.getElementById('lbl-ak-test');
   if(btn){ btn.textContent='...'; btn.disabled=true; }
   try{
-    // Use CORS proxy for browser-based API calls
-    const proxyUrl='https://corsproxy.io/?url=https://api.anthropic.com/v1/messages';
-    const res=await fetch(proxyUrl,{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
       body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:5,messages:[{role:'user',content:'Hi'}]})
     });
     if(res.ok){
@@ -1260,10 +1263,14 @@ async function analyzeWithClaude(){
   const b64=photoUrl.split(',')[1];
   const mime=(photoUrl.match(/data:([^;]+);/)||[])[1]||'image/jpeg';
   const prompt='Analyze this specialty coffee package label. Extract ONLY clearly visible text. Respond ONLY as JSON without markdown: {"nombre":"","tostador":"","pais":"","region":"","variedad":"","proceso":"","altitud":"","notas_cata":"","descripcion_ia":""}';
-  const proxyUrl='https://corsproxy.io/?url=https://api.anthropic.com/v1/messages';
-  const res=await fetch(proxyUrl,{
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':apiKey,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
     body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:700,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mime,data:b64}},{type:'text',text:prompt}]}]})
   });
   const data=await res.json();
