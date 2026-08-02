@@ -573,12 +573,12 @@ async function loadData(){
     const req=store.getAll();
     req.onsuccess=()=>{
       cafes=req.result.sort((a,b)=>b.id-a.id);
-      renderHome(); renderStats(); applyLang();
+      renderHome(); renderStats(); applyLang(); loadApiKey();
     };
   }catch(e){
     // fallback localStorage
     try{cafes=JSON.parse(localStorage.getItem('cj_cafes')||'[]');}catch(e2){cafes=[];}
-    renderHome(); renderStats(); applyLang(); loadApiKey(); loadApiKey();
+    renderHome(); renderStats(); applyLang(); loadApiKey();
   }
 }
 async function saveData(){
@@ -798,28 +798,6 @@ function updatePhotoZone(){
 }
 
 // ─── AI ──────────────────────────────────────────────────────────
-async function doAI(){
-  if(!photoUrl) return;
-  const btn=document.getElementById('aib');
-  document.getElementById('ai-tx').textContent=t('aiA');
-  document.getElementById('ai-ic').innerHTML='<span class="spin"></span>';
-  btn.disabled=true;
-  try{
-    const b64=photoUrl.split(',')[1], mime=(photoUrl.match(/data:([^;]+);/)||[])[1]||'image/jpeg';
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:700,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mime,data:b64}},{type:'text',text:'Analyze this specialty coffee package. Extract ONLY clearly visible text from label. Respond ONLY as JSON no markdown:\n{"nombre":"","tostador":"","pais":"","region":"","variedad":"","proceso":"","altitud":"","notas_cata":"","descripcion_ia":""}'}]}]})});
-    const data=await res.json(); const tx=data.content?.[0]?.text||'';
-    let info={}; try{info=JSON.parse(tx.replace(/```json|```/g,'').trim());}catch(e){}
-    const map={nombre:'f-nom',tostador:'f-tos',pais:'f-pai',region:'f-reg',variedad:'f-var',notas_cata:'f-noe'};
-    const filled=[];
-    Object.entries(map).forEach(([k,id])=>{ if(info[k]){document.getElementById(id).value=info[k];filled.push(k);} });
-    if(info.proceso){document.getElementById('f-pro').value=info.proceso;filled.push('proceso');}
-    if(info.altitud){document.getElementById('f-'+('nom')).value||''; /* altitud goes to prep modal */ filled.push('altitud');}
-    const ar=document.getElementById('air'); document.getElementById('air-tx').textContent=filled.length?filled.join(', ')+(info.descripcion_ia?' — '+info.descripcion_ia:''):t('nrd'); ar.style.display='block';
-    if(filled.length) toast('✨ '+filled.length+t('fok'));
-  }catch(e){ toast('Error IA'); }
-  btn.disabled=false; document.getElementById('ai-tx').textContent=t('ai'); document.getElementById('ai-ic').textContent='✨';
-}
-
 // ─── REBUY ───────────────────────────────────────────────────────
 function setRebuy(v){ rebuy=v; updateRebuy(); }
 function updateRebuy(){ document.getElementById('rb-y').classList.toggle('active',rebuy===true); document.getElementById('rb-n').classList.toggle('active',rebuy===false); }
