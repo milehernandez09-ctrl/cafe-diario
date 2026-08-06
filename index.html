@@ -582,20 +582,9 @@ async function loadData(){
     // Load cafe data
     const tx=db.transaction('cafes','readonly');
     const req=tx.objectStore('cafes').getAll();
-    req.onsuccess=async()=>{
-      cafes=req.result.filter(c=>!c.key&&!c.mode||c.mode).sort((a,b)=>b.id-a.id);
-      // Load photos and attach to cafes
-      try{
-        const ptx=db.transaction('photos','readonly');
-        const preq=ptx.objectStore('photos').getAll();
-        preq.onsuccess=()=>{
-          const photoMap={};
-          preq.result.forEach(p=>photoMap[p.id]=p.foto);
-          cafes=cafes.map(c=>({...c,foto:photoMap[c.id]||null}));
-          renderHome(); renderStats(); applyLang(); loadApiKey();
-        };
-        preq.onerror=()=>{ renderHome(); renderStats(); applyLang(); loadApiKey(); };
-      }catch(pe){ renderHome(); renderStats(); applyLang(); loadApiKey(); }
+    req.onsuccess=()=>{
+      cafes=req.result.filter(c=>c.mode||c.nom).sort((a,b)=>b.id-a.id);
+      renderHome(); renderStats(); applyLang(); loadApiKey();
     };
     req.onerror=()=>{ cafes=[]; renderHome(); renderStats(); applyLang(); loadApiKey(); };
   }catch(e){
@@ -609,12 +598,9 @@ async function saveData(){
     if(!db) await initDB();
     const tx=db.transaction('cafes','readwrite');
     const store=tx.objectStore('cafes');
-    // Save cafe data WITHOUT photos (photos stored separately)
+    // Save cafes with tiny thumbnails (5-8KB each)
     store.clear();
-    cafes.forEach(c=>{
-      const slim={...c,foto:null}; // never store photo in cafe record
-      store.put(slim);
-    });
+    cafes.forEach(c=>store.put(c));
   }catch(e){
     try{
       const slim=cafes.map(c=>({...c,foto:null}));
@@ -809,36 +795,39 @@ function renderStats(){
 }
 
 // ─── PHOTO ───────────────────────────────────────────────────────
+let photoFull=null; // full size for AI analysis only
 function handlePhoto(e){
   const f=e.target.files[0]; if(!f) return;
   const r=new FileReader();
   r.onload=ev=>{
     const img=new Image();
     img.onload=()=>{
-      // Compress aggressively for storage: max 300px, quality 0.4
-      const MAX=300, q=0.4;
+      // Keep medium version for AI (400px)
+      const MAX_AI=400;
+      const ratioAI=Math.min(1,MAX_AI/Math.max(img.width,img.height));
+      const wAI=Math.round(img.width*ratioAI), hAI=Math.round(img.height*ratioAI);
+      const cvAI=document.createElement('canvas'); cvAI.width=wAI; cvAI.height=hAI;
+      cvAI.getContext('2d').drawImage(img,0,0,wAI,hAI);
+      photoFull=cvAI.toDataURL('image/jpeg',0.7); // for AI
+
+      // Tiny thumbnail for storage: 150px, quality 0.25 = ~5-8KB
+      const MAX=150;
       const ratio=Math.min(1,MAX/Math.max(img.width,img.height));
       const w=Math.round(img.width*ratio), h=Math.round(img.height*ratio);
       const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
       cv.getContext('2d').drawImage(img,0,0,w,h);
-      photoUrl=cv.toDataURL('image/jpeg',q);
-      // If still too big (>80KB), compress more
-      if(photoUrl.length > 109226){ // ~80KB in base64
-        const cv2=document.createElement('canvas');
-        cv2.width=Math.round(w*0.7); cv2.height=Math.round(h*0.7);
-        cv2.getContext('2d').drawImage(img,0,0,cv2.width,cv2.height);
-        photoUrl=cv2.toDataURL('image/jpeg',0.35);
-      }
+      photoUrl=cv.toDataURL('image/jpeg',0.25);
+
       updatePhotoZone();
       document.getElementById('aib').disabled=false;
       const kb=Math.round(photoUrl.length*0.75/1024);
-      toast('📸 Foto lista ('+kb+' KB)');
+      toast('📸 Lista ('+kb+' KB guardado)');
     };
     img.src=ev.target.result;
   };
   r.readAsDataURL(f);
 }
-function removePhoto(){ photoUrl=null; updatePhotoZone(); document.getElementById('aib').disabled=true; }
+function removePhoto(){ photoUrl=null; photoFull=null; updatePhotoZone(); document.getElementById('aib').disabled=true; }
 function updatePhotoZone(){
   const z=document.getElementById('pz');
   const pb=document.getElementById('photo-btns');
@@ -944,11 +933,14 @@ function saveCafe(){
   if(isEdit) cafes=cafes.map(c=>c.id===editId?cafe:c); else cafes.unshift(cafe);
   document.getElementById('tb-sub').textContent=cafes.length+t('sub');
   editId=null;
-  // Save and navigate - show success immediately
-  toast(isEdit?t('upd'):t('saved'));
-  showSc('home');
-  // Save in background
-  saveSingleCafe(cafe);
+  // Save FIRST, then navigate
+  saveSingleCafe(cafe).then(()=>{
+    toast(isEdit?t('upd'):t('saved'));
+    showSc('home');
+  }).catch(()=>{
+    toast(isEdit?t('upd'):t('saved'));
+    showSc('home');
+  });
 }
 
 // ─── RESET ───────────────────────────────────────────────────────
@@ -970,14 +962,9 @@ function toast(msg){ const el=document.getElementById('toast'); el.textContent=m
 async function clearPhotos(){
   if(!confirm('¿Eliminar todas las fotos para liberar espacio? Los datos del café se conservan.')) return;
   cafes=cafes.map(c=>({...c,foto:null}));
-  photoUrl=null;
-  try{
-    if(!db) await initDB();
-    const tx=db.transaction('photos','readwrite');
-    tx.objectStore('photos').clear();
-  }catch(e){}
+  photoUrl=null; photoFull=null;
   saveData(); renderStats();
-  toast('🗑 Fotos eliminadas. Espacio liberado.');
+  toast('🗑 Miniaturas eliminadas. Espacio liberado.');
 }
 
 function storageUsed(){
@@ -1238,7 +1225,8 @@ async function analyzeWithGoogle(){
     setTimeout(()=>showSc('settings'),1200);
     return;
   }
-  const b64=photoUrl.split(',')[1];
+  const src=photoFull||photoUrl;
+  const b64=src.split(',')[1];
   const res=await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${googleKey}`,{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({requests:[{
@@ -1321,8 +1309,9 @@ function parseLabelsText(text, labels){
 
 async function analyzeWithClaude(){
   if(!apiKey){ toast('⚙️ Configura tu Claude API key en Ajustes'); setTimeout(()=>showSc('settings'),1200); return; }
-  const b64=photoUrl.split(',')[1];
-  const mime=(photoUrl.match(/data:([^;]+);/)||[])[1]||'image/jpeg';
+  const src=photoFull||photoUrl; // use full size for AI if available
+  const b64=src.split(',')[1];
+  const mime=(src.match(/data:([^;]+);/)||[])[1]||'image/jpeg';
   const prompt='Analyze this specialty coffee package label. Extract ONLY clearly visible text. Respond ONLY as JSON without markdown: {"nombre":"","tostador":"","pais":"","region":"","variedad":"","proceso":"","altitud":"","notas_cata":"","descripcion_ia":""}';
   const res=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
