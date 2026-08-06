@@ -559,21 +559,17 @@ function applyLang(){
 let db=null;
 function initDB(){
   return new Promise((res,rej)=>{
-    const req=indexedDB.open('CafeDiario',2); // v2: separate stores
+    const req=indexedDB.open('CafeDiario',3);
     req.onupgradeneeded=e=>{
       const d=e.target.result;
-      // Cafes store - data only, no photos
       if(!d.objectStoreNames.contains('cafes'))
         d.createObjectStore('cafes',{keyPath:'id'});
-      // Config store - API keys, settings
       if(!d.objectStoreNames.contains('config'))
         d.createObjectStore('config',{keyPath:'key'});
-      // Photos store - base64 images, keyed by cafe id
-      if(!d.objectStoreNames.contains('photos'))
-        d.createObjectStore('photos',{keyPath:'id'});
     };
     req.onsuccess=e=>{ db=e.target.result; res(db); };
-    req.onerror=()=>rej(req.error);
+    req.onerror=e=>{ console.error('IndexedDB error',e); rej(req.error); };
+    req.onblocked=()=>{ console.warn('IndexedDB blocked'); };
   });
 }
 async function loadData(){
@@ -588,7 +584,10 @@ async function loadData(){
     };
     req.onerror=()=>{ cafes=[]; renderHome(); renderStats(); applyLang(); loadApiKey(); };
   }catch(e){
-    try{cafes=JSON.parse(localStorage.getItem('cj_cafes')||'[]');}catch(e2){cafes=[];}
+    try{
+      const stored=localStorage.getItem('cj_cafes');
+      cafes=stored?JSON.parse(stored):[];
+    }catch(e2){cafes=[];}
     renderHome(); renderStats(); applyLang(); loadApiKey();
   }
 }
@@ -795,33 +794,39 @@ function renderStats(){
 }
 
 // ─── PHOTO ───────────────────────────────────────────────────────
-let photoFull=null; // full size for AI analysis only
+let photoFull=null;
 function handlePhoto(e){
   const f=e.target.files[0]; if(!f) return;
   const r=new FileReader();
   r.onload=ev=>{
     const img=new Image();
     img.onload=()=>{
-      // Keep medium version for AI (400px)
-      const MAX_AI=400;
-      const ratioAI=Math.min(1,MAX_AI/Math.max(img.width,img.height));
-      const wAI=Math.round(img.width*ratioAI), hAI=Math.round(img.height*ratioAI);
-      const cvAI=document.createElement('canvas'); cvAI.width=wAI; cvAI.height=hAI;
-      cvAI.getContext('2d').drawImage(img,0,0,wAI,hAI);
-      photoFull=cvAI.toDataURL('image/jpeg',0.7); // for AI
+      // Medium for AI (350px, stored in memory only)
+      const cvAI=document.createElement('canvas');
+      const rAI=Math.min(1,350/Math.max(img.width,img.height));
+      cvAI.width=Math.round(img.width*rAI); cvAI.height=Math.round(img.height*rAI);
+      cvAI.getContext('2d').drawImage(img,0,0,cvAI.width,cvAI.height);
+      photoFull=cvAI.toDataURL('image/jpeg',0.65);
 
-      // Tiny thumbnail for storage: 150px, quality 0.25 = ~5-8KB
-      const MAX=150;
-      const ratio=Math.min(1,MAX/Math.max(img.width,img.height));
-      const w=Math.round(img.width*ratio), h=Math.round(img.height*ratio);
-      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
-      cv.getContext('2d').drawImage(img,0,0,w,h);
-      photoUrl=cv.toDataURL('image/jpeg',0.25);
+      // Micro thumbnail for storage: 100px, quality 0.2 = ~2-4KB guaranteed
+      const cv=document.createElement('canvas');
+      const r2=Math.min(1,100/Math.max(img.width,img.height));
+      cv.width=Math.round(img.width*r2); cv.height=Math.round(img.height*r2);
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      photoUrl=cv.toDataURL('image/jpeg',0.2);
+
+      // Ensure under 6KB (~8200 base64 chars)
+      if(photoUrl.length>8200){
+        const cv3=document.createElement('canvas');
+        cv3.width=80; cv3.height=Math.round(80*cv.height/cv.width);
+        cv3.getContext('2d').drawImage(img,0,0,cv3.width,cv3.height);
+        photoUrl=cv3.toDataURL('image/jpeg',0.15);
+      }
 
       updatePhotoZone();
       document.getElementById('aib').disabled=false;
-      const kb=Math.round(photoUrl.length*0.75/1024);
-      toast('📸 Lista ('+kb+' KB guardado)');
+      const kb=(photoUrl.length*0.75/1024).toFixed(1);
+      toast('📸 Lista ('+kb+' KB)');
     };
     img.src=ev.target.result;
   };
@@ -1025,38 +1030,47 @@ function dismissBanner(){
 let apiKey=null, googleKey=null, aiMode='manual';
 
 async function loadApiKey(){
+  // Load from localStorage first (always reliable)
+  apiKey=localStorage.getItem('cj_apikey')||null;
+  googleKey=localStorage.getItem('cj_googlekey')||null;
+  aiMode=localStorage.getItem('cj_aimode')||'manual';
+
+  // Try IndexedDB to get potentially newer values
   try{
     if(!db) await initDB();
     const tx=db.transaction('config','readonly');
     const store=tx.objectStore('config');
     const r1=store.get('apikey');
-    r1.onsuccess=()=>{ if(r1.result) apiKey=r1.result.value; };
+    r1.onsuccess=()=>{ if(r1.result&&r1.result.value) apiKey=r1.result.value; };
     const r2=store.get('googlekey');
-    r2.onsuccess=()=>{ if(r2.result) googleKey=r2.result.value; };
+    r2.onsuccess=()=>{ if(r2.result&&r2.result.value) googleKey=r2.result.value; };
     const r3=store.get('aimode');
     r3.onsuccess=()=>{
-      if(r3.result) aiMode=r3.result.value||'manual';
+      if(r3.result&&r3.result.value) aiMode=r3.result.value;
+    };
+    tx.oncomplete=()=>{
       updateKeyStatus(); updateModeUI();
       setTimeout(()=>{
         const ai=document.getElementById('apikey-input'); if(ai&&apiKey) ai.value=apiKey;
         const gi=document.getElementById('google-key-input'); if(gi&&googleKey) gi.value=googleKey;
-      },300);
+      },400);
     };
-    r3.onerror=()=>{ updateKeyStatus(); updateModeUI(); };
   }catch(e){
-    apiKey=localStorage.getItem('cj_apikey')||null;
-    googleKey=localStorage.getItem('cj_googlekey')||null;
-    aiMode=localStorage.getItem('cj_aimode')||'manual';
+    // localStorage values already loaded above
     updateKeyStatus(); updateModeUI();
+    setTimeout(()=>{
+      const ai=document.getElementById('apikey-input'); if(ai&&apiKey) ai.value=apiKey;
+    },400);
   }
 }
 
 async function saveMode(m){
+  localStorage.setItem('cj_aimode',m);
   try{
     if(!db) await initDB();
     const tx=db.transaction('config','readwrite');
     tx.objectStore('config').put({key:'aimode',value:m});
-  }catch(e){ localStorage.setItem('cj_aimode',m); }
+  }catch(e){ console.warn('saveMode IndexedDB failed'); }
 }
 
 function setAIMode(m){
@@ -1098,13 +1112,19 @@ async function saveApiKey(){
   if(!key){ toast('Ingresa tu API key'); return; }
   if(!key.startsWith('sk-ant-')){ toast('❌ Debe empezar con sk-ant-'); return; }
   apiKey=key;
+  // Save to localStorage as primary (always works)
+  localStorage.setItem('cj_apikey',key);
+  localStorage.setItem('cj_aimode','claude');
+  // Also save to IndexedDB as backup
   try{
     if(!db) await initDB();
     const tx=db.transaction('config','readwrite');
-    tx.objectStore('config').put({key:'apikey',value:key});
-    // Also save aimode as claude
-    tx.objectStore('config').put({key:'aimode',value:'claude'});
-  }catch(e){ localStorage.setItem('cj_apikey',key); }
+    const store=tx.objectStore('config');
+    store.put({key:'apikey',value:key});
+    store.put({key:'aimode',value:'claude'});
+    tx.oncomplete=()=>console.log('API key saved to IndexedDB');
+    tx.onerror=()=>console.warn('IndexedDB save failed, using localStorage');
+  }catch(e){ console.warn('IndexedDB unavailable, using localStorage'); }
   updateKeyStatus();
   toast('✅ Claude API key guardada');
   document.getElementById('key-status').innerHTML='<span style="color:var(--green)">✅ Guardada correctamente</span>';
